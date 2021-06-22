@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "ctype.h": "c"
+    },
+    "files.exclude": {
+        "**/*.d": true,
+        "**/*.o": true
+    }
+}

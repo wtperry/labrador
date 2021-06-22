@@ -59,6 +59,13 @@ _start:
 	mov $stack_top, %esp
 
 	/*
+	Push the multiboot info onto the stack to allow the kernel main function
+	to access the data
+	*/
+	push %eax
+	push %ebx
+
+	/*
 	This is a good place to initialize crucial processor state before the
 	high-level kernel is entered. It's best to minimize the early
 	environment where crucial features are offline. Note that the
@@ -70,7 +77,7 @@ _start:
 	*/
 
 	# Call the global constructors
-	#call _init
+	call _init
 
 	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
@@ -96,3 +103,32 @@ Set the size of the _start symbol to the current location '.' minus its start.
 This is useful when debugging or when you implement call tracing.
 */
 .size _start, . - _start
+
+.global load_gdt
+load_gdt:
+	mov 4(%esp), %eax
+	lgdt (%eax)
+
+	mov $0x10, %eax
+	mov %eax, %ds
+	mov %eax, %es
+	mov %eax, %fs
+	mov %eax, %gs
+	mov %eax, %ss
+	jmp $0x8, $.long_jump
+.long_jump:
+	ret
+
+.global load_idt
+load_idt:
+	mov 4(%esp), %eax
+	lidt (%eax)
+	ret
+
+.global gen_interrupt
+gen_interrupt:
+	mov 1(%esp), %al
+	mov %al, .genint+1
+.genint:
+	int $0x00
+	ret
