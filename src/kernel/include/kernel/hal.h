@@ -10,4 +10,6 @@ void init_hal(void);
 void enable_interrupts(void);
 void disable_interrupts(void);
 
+void print_time(void);
+
 #endif

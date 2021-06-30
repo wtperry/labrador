@@ -6,6 +6,8 @@
 
 #include "multiboot.h"
 
+extern void _start();
+
 void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
 	// Make sure the magic number matches for memory mapping
 	if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
@@ -43,11 +45,11 @@ void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
 void kernel_main(multiboot_info_t* mbd, uint32_t magic) {
 	terminal_initialize();
 	printf("Hello, kernel World!\n");
+	printf("%p\n", &_start);
 
 	init_hal();
 
 	print_ram_map(mbd, magic);
 
-	int num = 0;
-	printf("This will never print %d\n", 5/num);
+	print_time();
 }
