@@ -36,7 +36,7 @@ undefined behavior.
 .section .bss
 .align 16
 stack_bottom:
-.skip 16384 # 16 KiB
+.skip 4096 # 4 KiB
 stack_top:
 
 /*
@@ -45,11 +45,9 @@ if kernel is greater than 3 MB
 */
 .section .page_data
 .align 4096
-boot_page_directory:
+page_directory:
 .skip 4096
 boot_page_table1:
-.skip 4096
-lower_page_table:
 .skip 4096
 
 /*
@@ -69,19 +67,15 @@ _start:
 	movl $1024, %ecx
 
 1:
-	# start mapping at the start of the kernel
-	cmpl $(_kernel_start - VIRTUAL_BASE), %esi
-	jl 2f
 	# only map until the end of the kernel
-	cmpl $(_kernel_end - VIRTUAL_BASE), %esi
-	jge 3f
+	# cmpl $(_kernel_end - VIRTUAL_BASE), %esi
+	# jge 2f
 	# map physical address as present and writable
 	movl %esi, %edx
 	orl $0x003, %edx
 	movl %edx, (%edi)
 
-2:
-	# size of page in 4096 bytes
+	# size of page is 4096 bytes
 	addl $4096, %esi
 	# size of entries in boot_page_table1 is 4 bytes
 	addl $4, %edi
@@ -89,13 +83,13 @@ _start:
 	dec %ecx
 	loop 1b
 
-3:
+2:
 	# map the page table to both virtual addresses 0x00000000 and 0xC0000000
-	movl $(boot_page_table1 - VIRTUAL_BASE + 0x003), boot_page_directory - VIRTUAL_BASE + 0
-	movl $(boot_page_table1 - VIRTUAL_BASE + 0x003), boot_page_directory - VIRTUAL_BASE + 768 * 4
+	movl $(boot_page_table1 - VIRTUAL_BASE + 0x003), page_directory - VIRTUAL_BASE + 0
+	movl $(boot_page_table1 - VIRTUAL_BASE + 0x003), page_directory - VIRTUAL_BASE + 768 * 4
 
 	# set cr3 to the address of the page directory
-	movl $(boot_page_directory - VIRTUAL_BASE), %ecx
+	movl $(page_directory - VIRTUAL_BASE), %ecx
 	movl %ecx, %cr3
 
 	# enable paging and write-protect bit
@@ -109,37 +103,8 @@ _start:
 
 higher_half:
 	# paging is enabled, unmap identity mapping
-	movl $0, boot_page_directory + 0
-
-	# setup a page table for the lower 1 MB
-	# store address of paging table
-	movl $lower_page_table, %edi
-	# start at 0, map first 1 MB as identity map
-	movl $0, %esi
-	# map 256 pages
-	movl $256, %ecx
-
-1:
-	# map physical address as present and writable
-	movl %esi, %edx
-	orl $0x003, %edx
-	movl %edx, (%edi)
-
-	# size of page is 4096 bytes
-	addl $4096, %esi
-	# size of entries in page table is 4 bytes
-	addl $4, %edi
-	# will go until ecx = 0 (1024 times)
-	loop 1b
-
-	# map the lower 1MB page table to virtual address 0x00000000
-	movl $(lower_page_table - VIRTUAL_BASE + 0x003), boot_page_directory + 0
-
-	# reload cr3 to force a TLB flush so changes take effect
-	# movl %cr3, %ecx
-	# movl %ecx, %cr3
-
-	invlpg 0x0
+	# movl $0, page_directory + 0
+	# invlpg 0
 
 	/*
 	To set up a stack, we set the esp register to point to the top of our
@@ -147,11 +112,13 @@ higher_half:
 	in assembly as languages such as C cannot function without a stack.
 	*/
 	mov $stack_top, %esp
+	xor %ebp, %ebp  # set ebp to NULL
 
 	/*
 	Push the multiboot info onto the stack to allow the kernel main function
 	to access the data
 	*/
+	# add $VIRTUAL_BASE, %ebx
 	push %eax
 	push %ebx
 

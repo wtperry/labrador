@@ -3,10 +3,9 @@
  
 #include <kernel/tty.h>
 #include <kernel/hal.h>
+#include <kernel/heap.h>
 
 #include "multiboot.h"
-
-extern void _start();
 
 void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
 	// Make sure the magic number matches for memory mapping
@@ -19,7 +18,7 @@ void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
 		printf("Invalid memory map given by GRUB bootloader\n");
 	}
 
-	size_t total_ram = 0;
+	uint64_t total_ram = 0;
 
 	// Loop through the memory map and display the values
 	for(size_t i = 0; i < mbd->mmap_length; i += sizeof(multiboot_memory_map_t)) {
@@ -45,7 +44,6 @@ void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
 void kernel_main(multiboot_info_t* mbd, uint32_t magic) {
 	terminal_initialize();
 	printf("Hello, kernel World!\n");
-	printf("%x\n", _start);
 
 	init_hal();
 

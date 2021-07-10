@@ -1,14 +1,17 @@
 #include <kernel/hal.h>
+#include <kernel/heap.h>
 #include <stdio.h>
+#include "memory/memmap.h"
 #include "gdt/gdt.h"
 #include "idt/idt.h"
 #include "pic/pic.h"
 #include "drivers/cmos/time.h"
 
-void init_hal() {
+void early_init() {
     init_gdt();
     init_idt();
     init_pic();
+    init_heap(KERNEL_HEAP_START, KERNEL_HEAP_SIZE);
 }
 
 void enable_interrupts() {
