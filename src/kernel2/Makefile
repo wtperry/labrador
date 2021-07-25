@@ -1,25 +1,20 @@
-HOST?=x86_64-elf
-HOSTARCH=x86_64
+DEFAULT_HOST!=../default-host.sh
+HOST?=DEFAULT_HOST
+HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
 
-CC=$(HOST)-gcc
-
-SYSROOT=../sysroot
-
-CFLAGS?=-g
+CFLAGS?=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
 
-DESTDIR?=$(SYSROOT)
-PREFIX?=/usr
+DESTDIR?=
+PREFIX?=/usr/local
 EXEC_PREFIX?=$(PREFIX)
+BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
-LIBDIR?=$(EXEC_PREFIX)/lib
-
-CC:=$(CC) --sysroot=$(SYSROOT) -isystem=$(INCLUDEDIR)
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude -I/usr/include/efi -I/usr/include/efi/x86_64
+CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
@@ -35,18 +30,16 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
+kernel/heap.o \
 
-#OBJS=\
+OBJS=\
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
 
-OBJS=\
-$(KERNEL_OBJS) \
-
-#LINK_LIST=\
+LINK_LIST=\
 $(LDFLAGS) \
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
@@ -55,34 +48,37 @@ $(LIBS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
 
-LINK_LIST=\
-$(KERNEL_OBJS) \
-$(LIBS) \
+.PHONY: all clean install install-headers install-kernel
 
-.PHONY: all clean install-headers
+all: labrador.kernel
 
-all: kernel.elf
-
-kernel.elf: $(OBJS) $(ARCHDIR)/linker.ld
+labrador.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	echo $(OBJS)
-	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) -z max-page-size=0x1000 $(LINK_LIST)
+	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+	grub-file --is-x86-multiboot labrador.kernel
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
-%.o: %.c Makefile
+%.o: %.c
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
-%.o: %.S Makefile
+%.o: %.S
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+
+clean:
+	rm -f labrador.kernel
+	rm -f $(OBJS) *.o */*.o */*/*.o
+	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+
+install: install-headers install-kernel
 
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-clean:
-	rm -f kernel.elf
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+install-kernel: labrador.kernel
+	mkdir -p $(DESTDIR)$(BOOTDIR)
+	cp labrador.kernel $(DESTDIR)$(BOOTDIR)
 
 -include $(OBJS:.o=.d)

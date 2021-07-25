@@ -1,53 +1,48 @@
-#include <stdio.h>
-#include <stdint.h>
- 
 #include <kernel/tty.h>
-#include <kernel/hal.h>
-#include <kernel/heap.h>
+#include <kernel/vmm.h>
+#include <kernel/pmm.h>
+#include <stdio.h>
+#include <bootloader/boot_spec.h>
 
-#include "multiboot.h"
+const char* MemoryTypeStrings[] = {
+	"Reserved",
+	"Free",
+	"ACPI",
+	"MMIO",
+	"Bootloader",
+	"Efi Runtime",
+	"Other"
+};
 
-void print_ram_map(multiboot_info_t* mbd, uint32_t magic) {
-	// Make sure the magic number matches for memory mapping
-	if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-		printf("Invalid magic number!\n");
-	}
+void kernel_main(boot_info* info) {
+	info = vmm_preinit(info);
+	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
+	pmm_init(&info->mmap, info->num_mmap_entries);
+	printf("Hello World!\n");
 
-	// Check bit 6 to see if we have a valid memory map
-	if (!(mbd->flags >> 6 & 0x1)) {
-		printf("Invalid memory map given by GRUB bootloader\n");
-	}
-
-	uint64_t total_ram = 0;
-
-	// Loop through the memory map and display the values
-	for(size_t i = 0; i < mbd->mmap_length; i += sizeof(multiboot_memory_map_t)) {
-		multiboot_memory_map_t* mmmt = (multiboot_memory_map_t*) (mbd->mmap_addr + i);
-
-		total_ram += mmmt->len;
-
-		printf("Start Addr: %.16llx | Length: %.16llx | Size: %d | Type: %d\n", mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
-
-		if (mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			/* 
-             * Do something with this memory block!
-             * BE WARNED that some of memory shown as availiable is actually 
-             * actively being used by the kernel! You'll need to take that
-             * into account before writing to memory!
-             */
+	mmap_entry* mmap = &info->mmap;
+	for(size_t i = 0; i < info->num_mmap_entries; i++) {
+		if (mmap[i].size >= 1024*1024*1024) {
+			printf("%.16lx-%.16lx    %4dGB    %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size/1024/1024/1024, MemoryTypeStrings[mmap[i].type]);
+		} else if (mmap[i].size >= 1024*1024) {
+			printf("%.16lx-%.16lx    %4dMB    %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size/1024/1024, MemoryTypeStrings[mmap[i].type]);
+		} else if (mmap[i].size >= 1024) {
+			printf("%.16lx-%.16lx    %4dKB    %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size/1024, MemoryTypeStrings[mmap[i].type]);
+		} else {
+			printf("%.16lx-%.16lx    %4dB     %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size, MemoryTypeStrings[mmap[i].type]);
 		}
 	}
 
-	printf("Total RAM: %dMB\n", total_ram/1024/1024);
-}
- 
-void kernel_main(multiboot_info_t* mbd, uint32_t magic) {
-	terminal_initialize();
-	printf("Hello, kernel World!\n");
+	printf("\n");
+	printf("Total Memory: %dMB\n", pmm_get_memory_size()/1024/1024);
+	
+	printf("Free: %uB    Used: %uB    Reserved %uB\n", pmm_get_free_memory(), pmm_get_used_memory(), pmm_get_reserved_memory());
 
-	init_hal();
+	for (size_t i = 0; i < 5; i++) {
+		printf("%.16x\n", allocate_page());
+	}
 
-	print_ram_map(mbd, magic);
-
-	print_time();
+	while (1) {
+		asm("hlt");
+	}
 }
