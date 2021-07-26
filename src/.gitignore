@@ -3,3 +3,4 @@ iso
 sysroot
 gdbscript
 *.img
+*.log
