@@ -1,7 +1,7 @@
 QEMULOG=debug.log
 OVMF=~/src/edk2/Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd
 QEMU=qemu-system-x86_64
-QEMUFLAGS=--bios $(OVMF) -net none -cdrom cdimage.iso -debugcon file:$(QEMULOG) -global isa-debugcon.iobase=0x402
+QEMUFLAGS=--bios $(OVMF) -net none -cdrom cdimage.iso -debugcon file:$(QEMULOG) -global isa-debugcon.iobase=0x402 -m 8G
 
 .PHONY: all clean binaries run debug install-headers
 
