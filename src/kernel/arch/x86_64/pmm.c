@@ -1,4 +1,6 @@
 #include <kernel/pmm.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "paging.h"
 
 size_t memory_size;
