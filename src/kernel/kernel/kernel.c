@@ -1,6 +1,7 @@
 #include <kernel/tty.h>
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
+#include <kernel/heap.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -20,6 +21,8 @@ void kernel_main(boot_info* info) {
 	info = vmm_preinit(info);
 	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
 	pmm_init(&info->mmap, info->num_mmap_entries);
+	vmm_init();
+	init_heap();
 
 	mmap_entry* mmap = &info->mmap;
 	for(size_t i = 0; i < info->num_mmap_entries; i++) {
@@ -36,6 +39,13 @@ void kernel_main(boot_info* info) {
 
 	printf("\n");
 	printf("Total Memory: %dMB\n", pmm_get_memory_size()/1024/1024);
+	printf("\n");
+
+	for(size_t i = 0; i < 8; i++) {
+		printf("%.16lx\n", kmalloc(1024));
+	}
+
+	printf("kmalloc test done!\n");
 
 	while (1) {
 		asm("hlt");

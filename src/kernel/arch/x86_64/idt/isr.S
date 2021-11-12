@@ -72,6 +72,8 @@ isr_exception_common:
     push %rax
     mov %gs, %rax
     push %rax
+    mov %cr2, %rax
+    push %rax
     mov $0x10, %ax  # load kernel data segment descriptor
     mov %ax, %ds
     mov %ax, %es
@@ -79,6 +81,7 @@ isr_exception_common:
     mov %ax, %gs
     mov %rsp, %rdi  # exception data struct
     call isr_exception_handler
+    pop %rax
     pop %rax
     mov %ax, %gs
     pop %rax
