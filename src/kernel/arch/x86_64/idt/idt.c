@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "exception.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -57,4 +58,6 @@ void init_idt() {
     }
 
     load_idt((uint64_t)&idtr);
+
+    init_exceptions();
 }

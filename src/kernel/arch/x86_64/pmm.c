@@ -69,6 +69,9 @@ size_t pmm_get_used_memory() {
 }
 
 void* allocate_page() {
+    free_memory -= PAGE_SIZE;
+    used_memory += PAGE_SIZE;
+
     void* page = next_free_page;
     next_free_page = ((free_page_header*)PHYS_TO_VIRT(next_free_page))->next;
     return page;
@@ -79,6 +82,9 @@ void lock_page(void* page_phys_addr) {
 }
 
 void free_page(void* page_phys_addr) {
+    free_memory += PAGE_SIZE;
+    used_memory -= PAGE_SIZE;
+
     ((free_page_header*)PHYS_TO_VIRT(page_phys_addr))->next = next_free_page;
     next_free_page = page_phys_addr;
 }

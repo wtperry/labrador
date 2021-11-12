@@ -1,15 +1,16 @@
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
+#include "exception.h"
 
-struct exception_data {
-    uint64_t gs, fs, es, ds;
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
-    uint64_t rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi;
-    uint64_t int_num, error_code;
-    uint64_t rip, cs, rflags, user_rsp, ss;
-};
+void (*handlers[32])(struct exception_data*);
 
 void isr_exception_handler(struct exception_data* ex_data) {
+    if (handlers[ex_data->int_num]) {
+        handlers[ex_data->int_num](ex_data);
+        return;
+    }
+
     printf("INTERRUPT: Exception no %x\n", ex_data->int_num);
     printf("rax=%.16x rbx=%.16x rcx=%.16x rdx=%.16x\n", ex_data->rax, ex_data->rbx, ex_data->rcx, ex_data->rdx);
     printf("rsi=%.16x rdi=%.16x rbp=%.16x rsp=%.16x\n", ex_data->rsi, ex_data->rdi, ex_data->rbp, ex_data->user_rsp);
@@ -18,7 +19,17 @@ void isr_exception_handler(struct exception_data* ex_data) {
     printf("cs=%.4x ds=%.4x es=%.4x fs=%.4x gs=%.4x ss=%.4x\n", ex_data->cs, ex_data->ds, ex_data->es, ex_data->fs, ex_data->gs, ex_data->ss);
     printf("Halting kernel...\n");
     
-    /*for(;;) {
+    for(;;) {
         asm("hlt");
-    }*/
+    }
+}
+
+void init_exceptions() {
+    for (size_t i = 0; i < 32; i++) {
+        handlers[i] = 0;
+    }
+}
+
+void register_exception_handler(void (*handler)(struct exception_data*), uint8_t ex_num) {
+    handlers[ex_num] = handler;
 }

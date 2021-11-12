@@ -1,9 +1,16 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
 #include "paging.h"
+#include "idt/exception.h"
+
+void* curr_brk;
+
+extern void* _kernel_end;
 
 void remap_physical_memory(void* PML4T) {
     // create pointer to first PML4E
@@ -30,11 +37,87 @@ boot_info* fix_boot_info(boot_info* info) {
     return info;
 }
 
-boot_info* vmm_preinit(boot_info* info) {
+void* get_PML4T() {
     // get current PML4T from cr3
     void* PML4T;
     asm("movq %%cr3, %0" : "=r" (PML4T));
     PML4T = (void*)((uint64_t)PML4T & 0xFFFFFFFFFFFFF000);
+    return PML4T;
+}
+
+void map_page(void* virt_addr, void* phys_addr) {
+    void* PML4T = get_PML4T();
+
+    uint16_t PML4T_index = ((uint64_t)virt_addr >> 39) & 0x1ff;
+    uint16_t PDPT_index = ((uint64_t)virt_addr >> 30) & 0x1ff;
+    uint16_t PDT_index = ((uint64_t)virt_addr >> 21) & 0x1ff;
+    uint16_t PT_index = ((uint64_t)virt_addr >> 12) & 0x1ff;
+
+    uint64_t* PML4E = ((uint64_t*)PML4T + PML4T_index);
+    void* PDPT;
+    if (!(*(uint64_t*)PHYS_TO_VIRT(PML4E) & PAGE_PRESENT)) {
+        //No PDPT for this address, make one
+        PDPT = allocate_page();
+        //zero out the new PDPT
+        memset(PHYS_TO_VIRT(PDPT), 0, 4096);
+        //add to the PML4E
+        *(uint64_t*)PHYS_TO_VIRT(PML4E) = ((uint64_t)PDPT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+    } else {
+        PDPT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PML4E) & PAGE_ADDR_MASK);
+    }
+
+    uint64_t* PDPE = ((uint64_t*)PDPT + PDPT_index);
+    void* PDT;
+    if (!(*(uint64_t*)PHYS_TO_VIRT(PDPE) & PAGE_PRESENT)) {
+        //No PDT for this address, make one
+        PDT = allocate_page();
+        //zero out the new PDT
+        memset(PHYS_TO_VIRT(PDT), 0, 4096);
+        //add to the PDPE
+        *(uint64_t*)PHYS_TO_VIRT(PDPE) = ((uint64_t)PDT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+    } else {
+        PDT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PDPE) & PAGE_ADDR_MASK);
+    }
+
+    uint64_t* PDE = ((uint64_t*)PDT + PDT_index);
+    void* PT;
+    if (!(*(uint64_t*)PHYS_TO_VIRT(PDE) & PAGE_PRESENT)) {
+        //No PT for this address, make one
+        PT = allocate_page();
+        //zero out the new PT
+        memset(PHYS_TO_VIRT(PT), 0, 4096);
+        //add to the PDE
+        *(uint64_t*)PHYS_TO_VIRT(PDE) = ((uint64_t)PT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+    } else {
+        PT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PDE) & PAGE_ADDR_MASK);
+    }
+
+    uint64_t* PTE = ((uint64_t*)PT + PT_index);
+    *(uint64_t*)PHYS_TO_VIRT(PTE) = ((uint64_t)phys_addr & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+}
+
+void page_fault_handler(struct exception_data* ex_data) {
+    printf("Page Fault!\n");
+    printf("Error code: %.16lx\n", ex_data->error_code);
+
+    if (!(ex_data->error_code & 1)) {
+        printf("Page not present!\n");
+        printf("Virt_Addr: %.16lx\n", ex_data->cr2);
+
+        if (ex_data->cr2 <= curr_brk) {
+            printf("Address before brk\n");
+            map_page(ex_data->cr2 & 0xFFFFFFFFFFFFF000, allocate_page());
+            return;
+        }
+    }
+
+    for (;;) {
+        asm("hlt");
+    }
+}
+
+boot_info* vmm_preinit(boot_info* info) {
+    void* PML4T = get_PML4T();
 
     remap_physical_memory(PML4T);
 
@@ -43,5 +126,12 @@ boot_info* vmm_preinit(boot_info* info) {
 }
 
 void vmm_init(void) {
+    curr_brk = (void*)(((uint64_t)&_kernel_end + 4095) / 4096 * 4096);
 
+    register_exception_handler(page_fault_handler, PAGE_FAULT);
+}
+
+void* kbrk(size_t size) {
+    curr_brk = (void*)((uint64_t)curr_brk + ((size + 4095) / 4096 * 4096));
+    return curr_brk;
 }
