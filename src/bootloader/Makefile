@@ -5,11 +5,11 @@ CC=x86_64-w64-mingw32-gcc
 
 SYSROOT=../sysroot
 
-DESTDIR?=$(SYSROOT)
-PREFIX?=/usr
-EXEC_PREFIX?=$(PREFIX)
-INCLUDEDIR?=$(PREFIX)/include
-LIBDIR?=$(EXEC_PREFIX)/lib
+DESTDIR:=$(SYSROOT)
+PREFIX:=/usr
+EXEC_PREFIX:=$(PREFIX)
+INCLUDEDIR:=$(PREFIX)/include
+LIBDIR:=$(EXEC_PREFIX)/lib
 
 CC:=$(CC) --sysroot=$(SYSROOT) -isystem=$(INCLUDEDIR)
 

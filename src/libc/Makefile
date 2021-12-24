@@ -11,11 +11,11 @@ CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
  
-DESTDIR?=$(SYSROOT)
-PREFIX?=/usr
-EXEC_PREFIX?=$(PREFIX)
-INCLUDEDIR?=$(PREFIX)/include
-LIBDIR?=$(EXEC_PREFIX)/lib
+DESTDIR:=$(SYSROOT)
+PREFIX:=/usr
+EXEC_PREFIX:=$(PREFIX)
+INCLUDEDIR:=$(PREFIX)/include
+LIBDIR:=$(EXEC_PREFIX)/lib
 
 CC:=$(CC) --sysroot=$(SYSROOT) -isystem=$(INCLUDEDIR)
  
@@ -63,7 +63,7 @@ BINARIES=libk.a
 .PHONY: all clean install install-headers install-libs
 .SUFFIXES: .o .libk.o .c .S
  
-all: $(BINARIES)
+all: install-libs
  
 libc.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
