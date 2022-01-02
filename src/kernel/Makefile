@@ -18,7 +18,7 @@ LIBDIR:=$(EXEC_PREFIX)/lib
 
 CC:=$(CC) --sysroot=$(SYSROOT) -isystem=$(INCLUDEDIR)
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -Wpedantic
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude -I/usr/include/efi -I/usr/include/efi/x86_64
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
@@ -65,25 +65,25 @@ $(LIBS) \
 all: kernel.elf
 
 kernel.elf: $(OBJS) $(ARCHDIR)/linker.ld
-	echo $(OBJS)
-	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) -z max-page-size=0x1000 $(LINK_LIST)
+	@echo $(OBJS)
+	@$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) -z max-page-size=0x1000 $(LINK_LIST)
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 %.o: %.c Makefile
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
+	@$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
 %.o: %.S Makefile
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	@$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 install-headers:
-	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	@mkdir -p $(DESTDIR)$(INCLUDEDIR)
+	@cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 clean:
-	rm -f kernel.elf
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	@rm -f kernel.elf
+	@rm -f $(OBJS) *.o */*.o */*/*.o
+	@rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
 
 -include $(OBJS:.o=.d)

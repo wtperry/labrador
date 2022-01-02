@@ -70,11 +70,11 @@ EFI_STATUS PrintNum(uint64_t x, int base) {
 }
 
 EFI_STATUS PrintHex(uint64_t x) {
-    PrintNum(x, 16);
+    return PrintNum(x, 16);
 }
 
 EFI_STATUS PrintDec(uint64_t x) {
-    PrintNum(x, 10);
+    return PrintNum(x, 10);
 }
 
 EFI_STATUS PrintLn(wchar_t* OutputString) {

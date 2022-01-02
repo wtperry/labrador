@@ -14,32 +14,32 @@
 #define PAGE_WRITEABLE (1 << 1)
 
 typedef struct {
-    void* VirtAddr;
-    void* PhysAddr;
+    EFI_PHYSICAL_ADDRESS VirtAddr;
+    EFI_PHYSICAL_ADDRESS PhysAddr;
     size_t NumPages;
 } PageMapping;
 
-void MapPages(PageMapping* ToMap, size_t NumToMap, void** FreePages, size_t NumFreePages) {
+void MapPages(PageMapping* ToMap, size_t NumToMap, EFI_PHYSICAL_ADDRESS FreePages[]) {
     //disable write protect
     uint64_t cr0;
     asm("movq %%cr0, %0" : "=r" (cr0));
     cr0 = cr0 & (~0x10000);
     asm("movq %0, %%cr0" : : "r" (cr0));
 
-    void* PML4T;
+    EFI_PHYSICAL_ADDRESS PML4T;
     asm("movq %%cr3, %0" : "=r" (PML4T));
-    PML4T = (void*)((uint64_t)PML4T & 0xFFFFFFFFFFFFF000);
+    PML4T = PML4T & 0xFFFFFFFFFFFFF000;
 
     size_t PagesMapped = 0;
 
     for (size_t i = 0; i < NumToMap; i++) {
-        void* BaseVirtAddr = ToMap[i].VirtAddr;
-        void* BasePhysAddr = ToMap[i].PhysAddr;
+        EFI_PHYSICAL_ADDRESS BaseVirtAddr = ToMap[i].VirtAddr;
+        EFI_PHYSICAL_ADDRESS BasePhysAddr = ToMap[i].PhysAddr;
         size_t NumPages = ToMap[i].NumPages;
 
         for (size_t j = 0; j < NumPages; j++) {
-            void* VirtAddr = (void*)((uint64_t)BaseVirtAddr + j * 4096);
-            void* PhysAddr = (void*)((uint64_t)BasePhysAddr + j * 4096);
+            EFI_PHYSICAL_ADDRESS VirtAddr = (EFI_PHYSICAL_ADDRESS)((uint64_t)BaseVirtAddr + j * 4096);
+            EFI_PHYSICAL_ADDRESS PhysAddr = (EFI_PHYSICAL_ADDRESS)((uint64_t)BasePhysAddr + j * 4096);
 
             uint16_t PML4T_Index = ((uint64_t)VirtAddr >> 39) & 0x1ff;
             uint16_t PDPT_Index = ((uint64_t)VirtAddr >> 30) & 0x1ff;
@@ -47,46 +47,46 @@ void MapPages(PageMapping* ToMap, size_t NumToMap, void** FreePages, size_t NumF
             uint16_t PT_Index = ((uint64_t)VirtAddr >> 12) & 0x1ff;
 
             uint64_t* PML4E = ((uint64_t*)PML4T + PML4T_Index);
-            void* PDPT;
+            EFI_PHYSICAL_ADDRESS PDPT;
             if (!(*PML4E & PAGE_PRESENT)) {
                 //No PDPT for this address, make one
                 PDPT = FreePages[PagesMapped++];
                 //zero out the new PDPT
-                memset(PDPT, 0, 4096);
+                memset((void*)PDPT, 0, 4096);
                 //add to the PML4E
-                *PML4E = ((uint64_t)PDPT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+                *PML4E = (((uint64_t)PDPT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
             } else {
-                PDPT = (void*)(*PML4E & PAGE_ADDR_MASK);
+                PDPT = (EFI_PHYSICAL_ADDRESS)(*PML4E & PAGE_ADDR_MASK);
             }
 
             uint64_t* PDPE = ((uint64_t*)PDPT + PDPT_Index);
-            void* PDT;
+            EFI_PHYSICAL_ADDRESS PDT;
             if (!(*PDPE & PAGE_PRESENT)) {
                 //No PDT for this address, make one
                 PDT = FreePages[PagesMapped++];
                 //zero out the new PDT
-                memset(PDT, 0, 4096);
+                memset((void*)PDT, 0, 4096);
                 //add to the PDPE
-                *PDPE = ((uint64_t)PDT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+                *PDPE = (((uint64_t)PDT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
             } else {
-                PDT = (void*)(*PDPE & PAGE_ADDR_MASK);
+                PDT = (EFI_PHYSICAL_ADDRESS)(*PDPE & PAGE_ADDR_MASK);
             }
 
             uint64_t* PDE = ((uint64_t*)PDT + PDT_Index);
-            void* PT;
+            EFI_PHYSICAL_ADDRESS PT;
             if (!(*PDE & PAGE_PRESENT)) {
                 //No PT for this address, make one
                 PT = FreePages[PagesMapped++];
                 //zero out the new PT
-                memset(PT, 0, 4096);
+                memset((void*)PT, 0, 4096);
                 //add to the PDE
-                *PDE = ((uint64_t)PT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+                *PDE = (((uint64_t)PT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
             } else {
-                PT = (void*)(*PDE & PAGE_ADDR_MASK);
+                PT = (EFI_PHYSICAL_ADDRESS)(*PDE & PAGE_ADDR_MASK);
             }
 
             uint64_t* PTE = ((uint64_t*)PT + PT_Index);
-            *PTE = ((uint64_t)PhysAddr & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+            *PTE = (((uint64_t)PhysAddr & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
         }
     }
 
@@ -285,15 +285,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             UINTN size = phdr->p_filesz;
             KernelFile->Read(KernelFile, &size, (void*)segment);
 
-            SegmentsToMap[NumSegments].PhysAddr = (void*)segment;
-            SegmentsToMap[NumSegments].VirtAddr = (void*)phdr->p_vaddr;
+            SegmentsToMap[NumSegments].PhysAddr = segment;
+            SegmentsToMap[NumSegments].VirtAddr = phdr->p_vaddr;
             SegmentsToMap[NumSegments].NumPages = pages;
             NumSegments++;
         }
     }
 
     #define PAGES_TO_RESERVE 20
-    void* FreePages[PAGES_TO_RESERVE];
+    EFI_PHYSICAL_ADDRESS FreePages[PAGES_TO_RESERVE];
     for (size_t i = 0; i < PAGES_TO_RESERVE; i++) {
         SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, 1, &FreePages[i]);
     }
@@ -342,7 +342,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         while(1);
     }
 
-    MapPages(SegmentsToMap, NumSegments, (void**)&FreePages, PAGES_TO_RESERVE);
+    MapPages(SegmentsToMap, NumSegments, FreePages);
 
     BuildMemoryMap(efi_boot_info, EfiMemoryMap, EfiMemoryMapSize, EfiDescriptorSize);
 

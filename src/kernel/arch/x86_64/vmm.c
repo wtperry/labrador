@@ -61,7 +61,7 @@ void map_page(void* virt_addr, void* phys_addr) {
         //zero out the new PDPT
         memset(PHYS_TO_VIRT(PDPT), 0, 4096);
         //add to the PML4E
-        *(uint64_t*)PHYS_TO_VIRT(PML4E) = ((uint64_t)PDPT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+        *(uint64_t*)PHYS_TO_VIRT(PML4E) = (((uint64_t)PDPT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
     } else {
         PDPT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PML4E) & PAGE_ADDR_MASK);
     }
@@ -74,7 +74,7 @@ void map_page(void* virt_addr, void* phys_addr) {
         //zero out the new PDT
         memset(PHYS_TO_VIRT(PDT), 0, 4096);
         //add to the PDPE
-        *(uint64_t*)PHYS_TO_VIRT(PDPE) = ((uint64_t)PDT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+        *(uint64_t*)PHYS_TO_VIRT(PDPE) = (((uint64_t)PDT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
     } else {
         PDT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PDPE) & PAGE_ADDR_MASK);
     }
@@ -87,13 +87,13 @@ void map_page(void* virt_addr, void* phys_addr) {
         //zero out the new PT
         memset(PHYS_TO_VIRT(PT), 0, 4096);
         //add to the PDE
-        *(uint64_t*)PHYS_TO_VIRT(PDE) = ((uint64_t)PT & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+        *(uint64_t*)PHYS_TO_VIRT(PDE) = (((uint64_t)PT & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
     } else {
         PT = (void*)(*(uint64_t*)PHYS_TO_VIRT(PDE) & PAGE_ADDR_MASK);
     }
 
     uint64_t* PTE = ((uint64_t*)PT + PT_index);
-    *(uint64_t*)PHYS_TO_VIRT(PTE) = ((uint64_t)phys_addr & PAGE_ADDR_MASK | PAGE_PRESENT | PAGE_WRITEABLE);
+    *(uint64_t*)PHYS_TO_VIRT(PTE) = (((uint64_t)phys_addr & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
 }
 
 void page_fault_handler(struct exception_data* ex_data) {
@@ -104,9 +104,9 @@ void page_fault_handler(struct exception_data* ex_data) {
         printf("Page not present!\n");
         printf("Virt_Addr: %.16lx\n", ex_data->cr2);
 
-        if (ex_data->cr2 <= curr_brk) {
+        if (ex_data->cr2 <= (uint64_t)curr_brk) {
             printf("Address before brk\n");
-            map_page(ex_data->cr2 & 0xFFFFFFFFFFFFF000, allocate_page());
+            map_page((void*)(ex_data->cr2 & 0xFFFFFFFFFFFFF000), allocate_page());
             return;
         }
     }
