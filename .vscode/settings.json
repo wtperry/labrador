@@ -6,6 +6,7 @@
     },
     "files.exclude": {
         "**/*.d": true,
-        "**/*.o": true
+        "**/*.o": true,
+        "**/*.EFI" : true
     }
 }

@@ -22,7 +22,7 @@ PSF1_FONT* LoadPSF1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandl
     SystemTable->BootServices->AllocatePool(EfiLoaderData, GlyphBufferSize, (void**)&GlyphBuffer);
     FontFile->Read(FontFile, &GlyphBufferSize, GlyphBuffer);
 
-    PSF1_FONT* Font;
+    PSF1_FONT* Font = NULL;
     SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(PSF1_FONT), (void**)Font);
     Font->psf1_header = FontHeader;
     Font->glyph_buffer = GlyphBuffer;

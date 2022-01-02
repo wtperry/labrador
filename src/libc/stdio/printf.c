@@ -257,7 +257,7 @@ int printf(const char* restrict format, ...) {
 				if ((*format == 'i') || (*format == 'd')) {
 					// signed
 					if (flags & FLAGS_LONG_LONG) {
-						const unsigned long long value = (unsigned long long) va_arg(parameters, long long);
+						const long long value = (long long) va_arg(parameters, long long);
 						len = _ntoa(value, str_buffer, base, value < 0, precision, width, flags);
 					} else if (flags & FLAGS_LONG) {
 						const long value = va_arg(parameters, long);
@@ -268,7 +268,7 @@ int printf(const char* restrict format, ...) {
 					}
 				} else if (*format == 'p') {
 					//pointer
-					const unsigned long long value = va_arg(parameters, void*);
+					const unsigned long long value = (unsigned long long)va_arg(parameters, void*);
 					len = _ntoa(value, str_buffer, base, false, precision, width, flags);
 				} else {
 					// unsigned

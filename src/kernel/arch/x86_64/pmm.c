@@ -77,10 +77,6 @@ void* allocate_page() {
     return page;
 }
 
-void lock_page(void* page_phys_addr) {
-
-}
-
 void free_page(void* page_phys_addr) {
     free_memory += PAGE_SIZE;
     used_memory -= PAGE_SIZE;
