@@ -8,7 +8,7 @@
 #include <kernel/arch/paging.h>
 #include "idt/exception.h"
 
-void* curr_brk;
+vaddr_t curr_brk;
 
 extern void* _kernel_end;
 
@@ -104,7 +104,7 @@ void page_fault_handler(struct exception_data* ex_data) {
         printf("Page not present!\n");
         printf("Virt_Addr: %.16lx\n", ex_data->cr2);
 
-        if (ex_data->cr2 <= (uint64_t)curr_brk) {
+        if (ex_data->cr2 <= curr_brk) {
             printf("Address before brk\n");
             map_page((ex_data->cr2 & 0xFFFFFFFFFFFFF000), allocate_page());
             return;
@@ -126,12 +126,13 @@ boot_info* vmm_preinit(boot_info* info) {
 }
 
 void vmm_init(void) {
-    curr_brk = (void*)(((uint64_t)&_kernel_end + 4095) / 4096 * 4096);
+    curr_brk = PAGE_ALIGN(&_kernel_end);
 
     register_exception_handler(page_fault_handler, PAGE_FAULT);
 }
 
-void* kbrk(size_t size) {
-    curr_brk = (void*)((uint64_t)curr_brk + ((size + 4095) / 4096 * 4096));
-    return curr_brk;
+vaddr_t vmm_alloc_region(size_t num_pages) {
+    vaddr_t old_brk = curr_brk;
+    curr_brk = curr_brk + num_pages * 4096;
+    return old_brk;
 }

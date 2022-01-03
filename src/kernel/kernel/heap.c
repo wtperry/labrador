@@ -1,8 +1,11 @@
 #include <kernel/heap.h>
 #include <kernel/vmm.h>
+#include <kernel/arch/paging.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+#define INIT_HEAP_PAGES 1
 
 struct mem_header {
     struct mem_header* next;
@@ -14,13 +17,23 @@ struct mem_header {
 struct mem_header* heap_start;
 struct mem_header* next_free = 0;
 
+struct mem_header* expand_heap(size_t min_size) {
+    size_t num_pages = (min_size + 4095) / 4096;
+    struct mem_header* new_block = (struct mem_header*) vmm_alloc_region(num_pages);
+    new_block->used = false;
+    new_block->next = NULL;
+    new_block->prev = NULL;
+    new_block->size = num_pages * 4096;
+    return new_block;
+}
+
 void init_heap() {
-    heap_start = kbrk(0);
+    heap_start = (struct mem_header*)vmm_alloc_region(INIT_HEAP_PAGES);
     next_free = heap_start;
-    next_free->next = 0;
-    next_free->prev = 0;
+    next_free->next = NULL;
+    next_free->prev = NULL;
     next_free->used = false;
-    next_free->size = (uint64_t)kbrk(1) - (uint64_t)heap_start;
+    next_free->size = INIT_HEAP_PAGES * 4096;
 }
 
 void* kmalloc(size_t size) {
@@ -50,6 +63,11 @@ void* kmalloc(size_t size) {
             }
 
             return (void*)((size_t)block + sizeof(struct mem_header));
+        }
+
+        if (!block->next) {
+            block->next = expand_heap(size);
+            block->next->prev = block;
         }
 
         block = block->next;
