@@ -47,7 +47,7 @@ clean:
 	@$(MAKE) -C bootloader clean
 	@$(MAKE) -C kernel clean
 	@$(MAKE) -C libc clean
-	@rm -f -r /sysroot
+	@rm -f -r sysroot
 	@rm -f fat.img
 	@rm -f cdimage.iso
 	@rm -f -r iso

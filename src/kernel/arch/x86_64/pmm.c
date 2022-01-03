@@ -1,17 +1,17 @@
 #include <kernel/pmm.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "paging.h"
+#include <kernel/arch/paging.h>
 
 size_t memory_size;
 size_t used_memory;
 size_t reserved_memory;
 size_t free_memory;
 
-void* next_free_page;
+paddr_t next_free_page;
 
 typedef struct {
-    void* next;
+    paddr_t next;
 } free_page_header;
 
 void pmm_init(mmap_entry* mmap, size_t mmap_entries) {
@@ -20,7 +20,7 @@ void pmm_init(mmap_entry* mmap, size_t mmap_entries) {
     reserved_memory = 0;
     free_memory = 0;
 
-    next_free_page = NULL;
+    next_free_page = 0;
 
     for (size_t i = 0; i < mmap_entries; i++) {
         memory_size += mmap[i].size;
@@ -30,8 +30,8 @@ void pmm_init(mmap_entry* mmap, size_t mmap_entries) {
         case MMAP_FREE:
             free_memory += mmap[i].size;
             for (size_t j = 0; j < mmap[i].size; j += 4096) {
-                if ((uint64_t)mmap[i].address + j != 0) {
-                    free_page((void*)(mmap[i].address + j));
+                if (mmap[i].address + j != 0) {
+                    free_page((mmap[i].address + j));
                 }
             }
             break;
@@ -68,16 +68,16 @@ size_t pmm_get_used_memory() {
     return used_memory;
 }
 
-void* allocate_page() {
+paddr_t allocate_page() {
     free_memory -= PAGE_SIZE;
     used_memory += PAGE_SIZE;
 
-    void* page = next_free_page;
+    paddr_t page = next_free_page;
     next_free_page = ((free_page_header*)PHYS_TO_VIRT(next_free_page))->next;
     return page;
 }
 
-void free_page(void* page_phys_addr) {
+void free_page(paddr_t page_phys_addr) {
     free_memory += PAGE_SIZE;
     used_memory -= PAGE_SIZE;
 
