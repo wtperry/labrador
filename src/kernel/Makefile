@@ -80,6 +80,8 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 install-headers:
 	@mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	@cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	@mkdir -p $(DESTDIR)$(INCLUDEDIR)/arch
+	@cp -R --preserve=timestamps $(ARCHDIR)/include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 clean:
 	@rm -f kernel.elf
