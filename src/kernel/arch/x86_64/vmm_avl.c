@@ -58,7 +58,7 @@ struct vmm_avl* rotate_left(struct vmm_avl* tree) {
     return new_tree;
 }
 
-struct vmm_avl* vmm_avl_new(void* start_addr, size_t size, bool used) {
+struct vmm_avl* vmm_avl_new(vaddr_t start_addr, size_t size, bool used) {
     struct vmm_avl* tree = kmalloc(sizeof(struct vmm_avl));
 
     tree->start_addr = start_addr;
@@ -73,7 +73,7 @@ struct vmm_avl* vmm_avl_new(void* start_addr, size_t size, bool used) {
     return tree;
 }
 
-struct vmm_avl* vmm_avl_insert(struct vmm_avl* tree, void* start_addr, size_t size, bool used) {
+struct vmm_avl* vmm_avl_insert(struct vmm_avl* tree, vaddr_t start_addr, size_t size, bool used) {
     if (tree == NULL) {
         return vmm_avl_new(start_addr, size, used);
     }
@@ -109,7 +109,7 @@ struct vmm_avl* vmm_avl_insert(struct vmm_avl* tree, void* start_addr, size_t si
     return tree;
 }
 
-struct vmm_avl* vmm_avl_delete(struct vmm_avl* tree, void* start_addr) {
+struct vmm_avl* vmm_avl_delete(struct vmm_avl* tree, vaddr_t start_addr) {
     if (tree == NULL)
         return tree;
     

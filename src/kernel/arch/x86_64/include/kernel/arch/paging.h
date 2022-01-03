@@ -12,5 +12,7 @@
 #define PAGE_PRESENT (1 << 0)
 #define PAGE_WRITEABLE (1 << 1)
 
+#define PAGE_ALIGN(addr) (((vaddr_t)addr + 4095) / 4096 * 4096)
+
 typedef uint64_t paddr_t;
 typedef uint64_t vaddr_t;

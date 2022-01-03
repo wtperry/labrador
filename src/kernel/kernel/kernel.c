@@ -24,6 +24,7 @@ void kernel_main(boot_info* info) {
 	vmm_init();
 	init_heap();
 
+	/*
 	mmap_entry* mmap = &info->mmap;
 	for(size_t i = 0; i < info->num_mmap_entries; i++) {
 		if (mmap[i].size >= 1024*1024*1024) {
@@ -36,6 +37,7 @@ void kernel_main(boot_info* info) {
 			printf("%.16lx-%.16lx    %4dB     %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size, MemoryTypeStrings[mmap[i].type]);
 		}
 	}
+	*/
 
 	printf("\n");
 	printf("Total Memory: %dMB\n", pmm_get_memory_size()/1024/1024);
