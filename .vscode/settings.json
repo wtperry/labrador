@@ -2,7 +2,8 @@
     "files.associations": {
         "stdint.h": "c",
         "ctype.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "list.h": "c"
     },
     "files.exclude": {
         "**/*.d": true,

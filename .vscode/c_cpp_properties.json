@@ -14,7 +14,11 @@
         {
             "name": "x86_64",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/src/kernel/include",
+                "${workspaceFolder}/src/kernel/arch/x86_64/include",
+                "${workspaceFolder}/src/libc/include",
+                "${workspaceFolder}/src/bootloader/include",
+                "/home/wtperry/opt/cross/lib/gcc/x86_64-elf/11.1.0"
             ],
             "defines": [
                 "_DEBUG",
@@ -22,10 +26,13 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe",
+            "compilerPath": "/home/wtperry/opt/cross/bin/x86_64-elf-gcc",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerArgs": [
+                "-ffreestanding"
+            ]
         }
     ],
     "version": 4
