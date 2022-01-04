@@ -77,6 +77,11 @@ void* kmalloc(size_t size) {
 }
 
 void kfree(void* ptr) {
+    // Do nothing when ptr is NULL
+    if (!ptr) {
+        return;
+    }
+
     struct mem_header* to_free = (struct mem_header*)((size_t)ptr - sizeof(struct mem_header));
     to_free->used = false;
     if (to_free->prev && !to_free->prev->used) {

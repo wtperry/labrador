@@ -2,6 +2,7 @@
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
+#include <kernel/fs/vfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -47,7 +48,19 @@ void kernel_main(boot_info* info) {
 		printf("%.16lx\n", kmalloc(1024));
 	}
 
+	printf("New VMM block: %.16lx\n", vmm_alloc_region(6));
+
+	for(size_t i = 0; i < 8; i++) {
+		printf("%.16lx\n", kmalloc(1024));
+	}
+
 	printf("kmalloc test done!\n");
+
+	dump_heap();
+
+	char* path = vfs_canonicize_path("./test", "/dev/null");
+
+	printf("%s\n", path);
 
 	while (1) {
 		asm("hlt");
