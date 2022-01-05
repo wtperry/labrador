@@ -21,6 +21,12 @@ void tree_destroy_node(tree_node_t* node) {
     kfree(node);
 }
 
+void tree_node_insert_child_node(tree_t* tree, tree_node_t* parent, tree_node_t* child) {
+    list_append(parent->children, child);
+
+    tree->nodes++;
+}
+
 tree_t* tree_create(void) {
     tree_t* tree = kmalloc(sizeof(tree_t));
     tree->nodes = 0;
@@ -33,4 +39,21 @@ void tree_destroy(tree_t* tree) {
     tree_destroy_node(tree->root);
 
     kfree(tree);
+}
+
+tree_node_t* tree_node_create(void* value) {
+    tree_node_t* node = kmalloc(sizeof(tree_node_t));
+
+    node->children = list_create();
+    node->parent = NULL;
+    node->value = value;
+
+    return node;
+}
+
+tree_node_t* tree_node_insert_child(tree_t* tree, tree_node_t* parent, void* value) {
+    tree_node_t* child = tree_node_create(value);
+    tree_node_insert_child_node(tree, parent, child);
+
+    return child;
 }
