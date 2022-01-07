@@ -15,6 +15,8 @@ void* memmove(void*, const void*, size_t);
 void* memset(void*, int, size_t);
 size_t strlen(const char*);
 int strcmp(const char* str1, const char* str2);
+char* strcpy(char* dest, const char* src);
+char* strdup(const char *src);
  
 #ifdef __cplusplus
 }

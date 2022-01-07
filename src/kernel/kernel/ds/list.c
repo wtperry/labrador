@@ -9,6 +9,8 @@ list_t* list_create(void) {
     list->head = NULL;
     list->tail = NULL;
     list->length = 0;
+
+    return list;
 }
 
 void list_destroy(list_t* list) {
@@ -43,7 +45,7 @@ list_node_t* list_append(list_t* list, void* value) {
 }
 
 list_node_t* list_find(list_t* list, void* value) {
-    list_node_t* node;
+    list_node_t* node = list->head;
 
     while (node) {
         if (node->value == value) {

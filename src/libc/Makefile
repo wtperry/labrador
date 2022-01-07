@@ -44,12 +44,15 @@ stdio/putchar.o \
 stdio/puts.o \
 stdlib/abort.o \
 stdlib/atoi.o \
+stdlib/malloc.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
 string/memset.o \
 string/strlen.o \
 string/strcmp.o \
+string/strdup.o \
+string/strcpy.o \
  
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
