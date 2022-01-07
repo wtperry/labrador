@@ -41,6 +41,12 @@ void tree_destroy(tree_t* tree) {
     kfree(tree);
 }
 
+void tree_set_root(tree_t* tree, void* value) {
+    tree_destroy_node(tree->root);
+
+    tree->root = tree_node_create(value);
+}
+
 tree_node_t* tree_node_create(void* value) {
     tree_node_t* node = kmalloc(sizeof(tree_node_t));
 

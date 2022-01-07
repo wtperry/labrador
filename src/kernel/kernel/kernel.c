@@ -3,6 +3,7 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/dummyfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -58,9 +59,25 @@ void kernel_main(boot_info* info) {
 
 	dump_heap();
 
-	char* path = vfs_canonicize_path("./test", "/dev/null");
+	vfs_init();
+	dummyfs_install();
 
-	printf("%s\n", path);
+	if (vfs_mount("dummyfs", "/dev/null", "/")) {
+		printf("Mount Failed!\n");
+		while (1) {
+			asm("hlt");
+		}
+	}
+
+	fs_node_t* root_dir = vfs_get_fs_node("/");
+	size_t index = 0;
+	dirent_t* dirent = vfs_readdir(root_dir, index);
+
+	while(dirent) {
+		printf("%s\n", dirent->name);
+		kfree(dirent);
+		dirent = vfs_readdir(root_dir, ++index);
+	}
 
 	while (1) {
 		asm("hlt");

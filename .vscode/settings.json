@@ -3,11 +3,13 @@
         "stdint.h": "c",
         "ctype.h": "c",
         "stdbool.h": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "tree.h": "c"
     },
     "files.exclude": {
         "**/*.d": true,
         "**/*.o": true,
         "**/*.EFI" : true
-    }
+    },
+    "C_Cpp.dimInactiveRegions": false
 }
