@@ -8,8 +8,7 @@
     },
     "files.exclude": {
         "**/*.d": true,
-        "**/*.o": true,
-        "**/*.EFI" : true
+        "**/*.o": true
     },
     "C_Cpp.dimInactiveRegions": false
 }

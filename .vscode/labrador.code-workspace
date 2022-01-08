@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../src/bootloader"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"stdint.h": "c",
+			"ctype.h": "c",
+			"stdbool.h": "c",
+			"list.h": "c",
+			"tree.h": "c"
+		}
+	}
+}
