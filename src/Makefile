@@ -28,17 +28,17 @@ cdimage.iso: binaries
 	@xorriso -as mkisofs -R -f -e fat.img -no-emul-boot -o cdimage.iso iso
 
 run: cdimage.iso
-	$(QEMU) $(QEMUFLAGS) &
+	@$(QEMU) $(QEMUFLAGS) &
 
 debug: cdimage.iso
-	LINE=$$(cat debug.log | awk '/BOOTX64.EFI/,0' | grep -m1 'Loading'); \
+	@LINE=$$(cat debug.log | awk '/BOOTX64.EFI/,0' | grep -m1 'Loading'); \
 	BASE=$$(echo $$LINE | cut -d " " -f4); \
 	ADDR=$$(readpe -H bootloader/BOOTX64.EFI | grep 'Address of .text section:' | tr ' ' '\n' | tail -n1); \
 	TEXT=$$(python -c "print(hex($$BASE+$$ADDR))"); \
 	echo "add-symbol-file bootloader/BOOTX64.EFI $$TEXT" > gdbscript; \
 	echo "add-symbol-file kernel/kernel.elf" >> gdbscript
-	$(QEMU) $(QEMUFLAGS) -s -S &
-	gdb -ex 'source gdbscript' -ex 'target remote localhost:1234'
+	@$(QEMU) $(QEMUFLAGS) -s -S &
+	@gdb -ex 'source gdbscript' -ex 'target remote localhost:1234'
 
 install-headers:
 	@$(MAKE) -C libc install-headers
