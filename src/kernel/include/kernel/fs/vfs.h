@@ -5,10 +5,6 @@
 
 #define FS_FILE         0x01
 #define FS_DIRECTORY    0x02
-#define FS_CHARDEVICE   0x04
-#define FS_BLOCKDEVICE  0x08
-#define FS_PIPE         0x10
-#define FS_SYMLINK      0x20
 
 struct fs_node;
 
@@ -23,14 +19,13 @@ typedef void (*close_type_t)(struct fs_node* node);
 typedef struct dirent* (*readdir_type_t)(struct fs_node* node, size_t index);
 typedef struct fs_node* (*finddir_type_t)(struct fs_node* node, const char* name);
 typedef int (*create_type_t)(struct fs_node* node, const char* name);
-typedef int (*delete_type_t)(struct fs_node* node);
+typedef int (*remove_type_t)(struct fs_node* node);
 typedef int (*mkdir_type_t)(struct fs_node* node, const char* name);
 typedef size_t (*getsize_type_t)(struct fs_node* node);
 
 typedef struct fs_node {
     char name[256];
     uint32_t flags;
-    size_t length;
 
     size_t ref_count;
 
@@ -43,7 +38,7 @@ typedef struct fs_node {
     readdir_type_t readdir;
     finddir_type_t finddir;
     create_type_t create;
-    delete_type_t delete;
+    remove_type_t remove;
     mkdir_type_t mkdir;
     getsize_type_t getsize;
 } fs_node_t;
@@ -80,6 +75,6 @@ void vfs_close(struct fs_node* node);
 struct dirent* vfs_readdir(struct fs_node* node, size_t index);
 struct fs_node* vfs_finddir(struct fs_node* node, const char* name);
 int vfs_create(const char* path);
-int vfs_delete(const char* path);
+int vfs_remove(const char* path);
 int vfs_mkdir(const char* path);
 size_t vfs_getsize(struct fs_node* node);

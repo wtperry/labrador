@@ -104,7 +104,7 @@ void page_fault_handler(struct exception_data* ex_data) {
         printf("Page not present!\n");
         printf("Virt_Addr: %.16lx\n", ex_data->cr2);
 
-        if (ex_data->cr2 <= curr_brk) {
+        if (ex_data->cr2 && ex_data->cr2 <= curr_brk) {
             printf("Address before brk\n");
             map_page((ex_data->cr2 & 0xFFFFFFFFFFFFF000), allocate_page());
             return;
