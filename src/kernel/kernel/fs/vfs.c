@@ -36,7 +36,7 @@ tree_node_t* get_deepest_tree_node(char* path, size_t depth, char** out_ptr, siz
     }
 
     *out_ptr = curr_path;
-    *out_depth = depth;
+    *out_depth = curr_depth;
 
     return curr_node;
 }
@@ -45,9 +45,12 @@ size_t split_path_and_get_depth(char* path) {
     size_t depth = 0;
     size_t path_len = strlen(path);
 
-    path[0] = '\0';
+    if (!strcmp(path, "/")) {
+        *path = '\0';
+        return 0;
+    }
 
-    for (size_t i = 1; i < path_len; i++) {
+    for (size_t i = 0; i < path_len; i++) {
         if (path[i] == '/') {
             path[i] = '\0';
             depth++;
@@ -131,7 +134,7 @@ int vfs_mount(const char* fs_type, const char* device, const char* mount_path) {
 
         vfs_entry_t* new_entry = kmalloc(sizeof(vfs_entry_t));
         new_entry->file = new_file;
-        new_entry->name = new_file->name;
+        new_entry->name = strdup(new_file->name);
 
         tree_node_t* new_node = tree_node_create(new_entry);
         
@@ -147,7 +150,8 @@ int vfs_mount(const char* fs_type, const char* device, const char* mount_path) {
     mount_entry->file = mount_root;
 
     if (!strcmp(mount_path, "/")) {
-        strcpy(mount_entry->name, "[root]");
+        kfree(mount_entry->name);
+        mount_entry->name = strdup("[root]");
     }
 
     return 0;
@@ -172,13 +176,20 @@ fs_node_t* vfs_get_fs_node(const char* path) {
 
     fs_node_t* curr_fs_node = mount_node;
 
-    for (; curr_path < split_path + path_len; curr_path += strlen(curr_path)) {
-        curr_fs_node = vfs_finddir(curr_fs_node, curr_path);
+    for (; curr_depth < depth; curr_depth++) {
+        fs_node_t* new_fs_node = vfs_finddir(curr_fs_node, curr_path);
+
+        kfree(curr_fs_node);
+        curr_fs_node = new_fs_node;
 
         if (!curr_fs_node) {
             return NULL;
         }
+
+        curr_path += (strlen(curr_path) + 1);
     }
+
+    kfree(split_path);
 
     return curr_fs_node;
 }
@@ -319,21 +330,93 @@ struct fs_node* vfs_finddir(struct fs_node* node, const char* name) {
 }
 
 int vfs_create(const char* path) {
-    (void)path;
-    //TODO: Add error codes
-    return -1;
+    if (!path) {
+        return -1;
+    }
+
+    if (!strlen(path)) {
+        return -1;
+    }
+
+    if (*path != '/') {
+        return -1;
+    }
+
+    // Split parent dir path and dir name
+    char* parent_path = strdup(path);
+    char* name = parent_path + strlen(parent_path) - 1;
+    while (*name != '/') {
+        name--;
+    }
+
+    *name = '\0';
+    name++;
+
+    fs_node_t* parent;
+    if (*parent_path == '\0') {
+        parent = vfs_get_fs_node("/");
+    } else {
+        parent = vfs_get_fs_node(parent_path);
+    }
+    kfree(parent_path);
+
+    if (!parent) {
+        return -1;
+    }
+
+    if (!parent->create) {
+        return -1;
+    }
+
+    return parent->create(parent, name);
 }
 
-int vfs_delete(const char* path) {
+int vfs_remove(const char* path) {
     (void)path;
     //TODO: Add error codes
     return -1;
 }
 
 int vfs_mkdir(const char* path) {
-    (void)path;
-    //TODO: Add error codes
-    return -1;
+    if (!path) {
+        return -1;
+    }
+
+    if (!strlen(path)) {
+        return -1;
+    }
+
+    if (*path != '/') {
+        return -1;
+    }
+
+    // Split parent dir path and dir name
+    char* parent_path = strdup(path);
+    char* name = parent_path + strlen(parent_path) - 1;
+    while (*name != '/') {
+        name--;
+    }
+
+    *name = '\0';
+    name++;
+
+    fs_node_t* parent;
+    if (*parent_path == '\0') {
+        parent = vfs_get_fs_node("/");
+    } else {
+        parent = vfs_get_fs_node(parent_path);
+    }
+    kfree(parent_path);
+
+    if (!parent) {
+        return -1;
+    }
+
+    if (!parent->mkdir) {
+        return -1;
+    }
+
+    return parent->mkdir(parent, name);
 }
 
 size_t vfs_getsize(struct fs_node* node) {

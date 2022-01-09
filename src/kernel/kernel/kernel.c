@@ -3,10 +3,11 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/fs/dummyfs.h>
+#include <kernel/fs/tmpfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <bootloader/boot_spec.h>
 
 const char* MemoryTypeStrings[] = {
@@ -60,9 +61,9 @@ void kernel_main(boot_info* info) {
 	dump_heap();
 
 	vfs_init();
-	dummyfs_install();
+	tmpfs_install();
 
-	if (vfs_mount("dummyfs", "/dev/null", "/")) {
+	if (vfs_mount("tmpfs", "[rootfs]", "/")) {
 		printf("Mount Failed!\n");
 		while (1) {
 			asm("hlt");
@@ -70,6 +71,23 @@ void kernel_main(boot_info* info) {
 	}
 
 	fs_node_t* root_dir = vfs_get_fs_node("/");
+
+	vfs_mkdir("/test");
+	vfs_mkdir("/wazzup");
+	printf("%i\n", vfs_create("/wazzup/test.txt"));
+
+	const char msg[] = "Hello filesystem world!";
+
+	fs_node_t* node = vfs_get_fs_node("/wazzup/test.txt");
+
+	vfs_write(node, 0, strlen(msg) + 1, msg);
+
+	char msg_out[256];
+
+	vfs_read(node, 0, 256, msg_out);
+
+	printf("%s\n", msg_out);
+
 	size_t index = 0;
 	dirent_t* dirent = vfs_readdir(root_dir, index);
 

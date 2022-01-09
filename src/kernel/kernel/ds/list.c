@@ -58,6 +58,20 @@ list_node_t* list_find(list_t* list, void* value) {
     return NULL;
 }
 
+list_node_t* list_at(list_t* list, size_t index) {
+    if (index >= list->length) {
+        return NULL;
+    }
+
+    list_node_t* out = list->head;
+
+    for (size_t i = 0; i < index; i++) {
+        out = out->next;
+    }
+
+    return out;
+}
+
 void list_remove(list_t* list, list_node_t* node) {
     if (node == list->head) {
         list->head = node->next;
