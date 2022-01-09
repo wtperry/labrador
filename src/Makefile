@@ -23,6 +23,7 @@ cdimage.iso: binaries
 	@mcopy -i fat.img bootloader/BOOTX64.EFI ::/EFI/BOOT
 	@mcopy -i fat.img kernel/kernel.elf ::/Labrador
 	@mcopy -i fat.img kernel/zap-light16.psf ::/Labrador
+	@mcopy -i fat.img initrd.tar ::/Labrador
 	@mkdir -p iso
 	@cp fat.img iso
 	@xorriso -as mkisofs -R -f -e fat.img -no-emul-boot -o cdimage.iso iso

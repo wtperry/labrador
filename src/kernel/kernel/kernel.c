@@ -4,6 +4,7 @@
 #include <kernel/heap.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/tmpfs.h>
+#include <kernel/fs/tarfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -24,10 +25,9 @@ void kernel_main(boot_info* info) {
 	info = vmm_preinit(info);
 	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
 	pmm_init(&info->mmap, info->num_mmap_entries);
-	vmm_init();
+	vmm_init(info);
 	init_heap();
 
-	/*
 	mmap_entry* mmap = &info->mmap;
 	for(size_t i = 0; i < info->num_mmap_entries; i++) {
 		if (mmap[i].size >= 1024*1024*1024) {
@@ -40,7 +40,6 @@ void kernel_main(boot_info* info) {
 			printf("%.16lx-%.16lx    %4dB     %11s\n", mmap[i].address, mmap[i].address+mmap[i].size, mmap[i].size, MemoryTypeStrings[mmap[i].type]);
 		}
 	}
-	*/
 
 	printf("\n");
 	printf("Total Memory: %dMB\n", pmm_get_memory_size()/1024/1024);
@@ -58,10 +57,9 @@ void kernel_main(boot_info* info) {
 
 	printf("kmalloc test done!\n");
 
-	dump_heap();
-
 	vfs_init();
 	tmpfs_install();
+	tarfs_install();
 
 	if (vfs_mount("tmpfs", "[rootfs]", "/")) {
 		printf("Mount Failed!\n");
@@ -96,6 +94,10 @@ void kernel_main(boot_info* info) {
 		kfree(dirent);
 		dirent = vfs_readdir(root_dir, ++index);
 	}
+
+	printf("%.16lx    %lx\n", info->initrd, info->initrd_size);
+
+	printf("Total Memory Used: %liKB\n", pmm_get_used_memory()/1024);
 
 	while (1) {
 		asm("hlt");

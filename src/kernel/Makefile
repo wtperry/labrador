@@ -40,6 +40,7 @@ kernel/ds/tree.o \
 kernel/ds/list.o \
 kernel/fs/vfs.o \
 kernel/fs/tmpfs.o \
+kernel/fs/tarfs.o \
 
 #OBJS=\
 $(ARCHDIR)/crti.o \

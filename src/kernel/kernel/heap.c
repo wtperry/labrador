@@ -7,6 +7,8 @@
 
 #define INIT_HEAP_PAGES 1
 
+#define HEAP_ALIGN 8
+
 struct mem_header {
     struct mem_header* next;
     struct mem_header* prev;
@@ -23,7 +25,7 @@ struct mem_header* expand_heap(size_t min_size) {
     new_block->used = false;
     new_block->next = NULL;
     new_block->prev = NULL;
-    new_block->size = num_pages * 4096;
+    new_block->size = num_pages * 4096 - sizeof(struct mem_header);
     return new_block;
 }
 
@@ -37,6 +39,8 @@ void init_heap() {
 }
 
 void* kmalloc(size_t size) {
+    size = (size + HEAP_ALIGN - 1)/HEAP_ALIGN * HEAP_ALIGN;
+
     struct mem_header* block = next_free;
 
     while (block) {

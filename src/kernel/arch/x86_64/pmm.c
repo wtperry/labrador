@@ -28,7 +28,7 @@ void pmm_init(mmap_entry* mmap, size_t mmap_entries) {
         switch (mmap[i].type)
         {
         case MMAP_FREE:
-            free_memory += mmap[i].size;
+            used_memory += mmap[i].size;
             for (size_t j = 0; j < mmap[i].size; j += 4096) {
                 if (mmap[i].address + j != 0) {
                     free_page((mmap[i].address + j));

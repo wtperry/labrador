@@ -31,6 +31,9 @@ typedef struct {
     uint16_t fb_scanline;
     PSF1_FONT* font;
     void* rsdp;
+    void* initrd;
+    size_t initrd_size;
     size_t num_mmap_entries;
+    void* first_free_page;
     mmap_entry mmap;
 } boot_info;

@@ -27,5 +27,7 @@ PSF1_FONT* LoadPSF1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandl
     Font->psf1_header = FontHeader;
     Font->glyph_buffer = GlyphBuffer;
 
+    FontFile->Close(FontFile);
+
     return Font;
 }
