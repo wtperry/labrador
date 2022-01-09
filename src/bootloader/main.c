@@ -268,7 +268,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     }
 
     PageMapping* SegmentsToMap;
-    SystemTable->BootServices->AllocatePool(EfiLoaderData, header.e_phnum * sizeof(PageMapping), (void**)&SegmentsToMap);
+    SystemTable->BootServices->AllocatePool(EfiLoaderData, header.e_phnum * sizeof(PageMapping) + 1, (void**)&SegmentsToMap);
     size_t NumSegments = 0;
 
     for (
@@ -291,6 +291,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             NumSegments++;
         }
     }
+
+    KernelFile->Close(KernelFile);
 
     #define PAGES_TO_RESERVE 20
     EFI_PHYSICAL_ADDRESS FreePages[PAGES_TO_RESERVE];
@@ -320,6 +322,54 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             }
         }
     }
+
+    EFI_FILE* InitrdFile = LoadFile(NULL, L"Labrador\\initrd.tar", ImageHandle, SystemTable);
+    if (InitrdFile == NULL) {
+        PrintLn(L"Could not load initrd");
+    } else {
+        PrintLn(L"Initrd file found");
+    }
+
+    EFI_PHYSICAL_ADDRESS InitrdPtr;
+    UINTN InitrdSize;
+
+    void* InitrdVirtPtr;
+
+    {
+        EFI_GUID FileInfoGuid = EFI_FILE_INFO_ID;
+        EFI_FILE_INFO* InitrdInfo;
+        UINTN InfoSize = sizeof(*InitrdInfo) + sizeof(WCHAR)*255;
+        SystemTable->BootServices->AllocatePool(EfiLoaderData, InfoSize, (void**)&InitrdInfo);
+        Status = InitrdFile->GetInfo(InitrdFile, &FileInfoGuid, &InfoSize, InitrdInfo);
+
+        InitrdSize = InitrdInfo->FileSize;
+        PrintLn(L"Initrd Size:");
+        PrintDec(InitrdSize);
+        PrintLn(L"");
+        
+        SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, (InitrdSize-1)/4096 + 1, &InitrdPtr);
+        Status = InitrdFile->Read(InitrdFile, &InitrdSize, InitrdPtr);
+
+        if (EFI_ERROR(Status)) {
+            PrintLn(L"Reading Initrd Failed");
+        } else {
+            PrintLn(L"Successfully loaded Initrd");
+            PrintHex(InitrdPtr);
+            PrintLn(L"");
+        }
+    }
+
+    InitrdVirtPtr = SegmentsToMap[NumSegments-1].VirtAddr + SegmentsToMap[NumSegments-1].NumPages * 4096;
+
+    SegmentsToMap[NumSegments].NumPages = (InitrdSize-1)/4096 + 1;
+    SegmentsToMap[NumSegments].PhysAddr = InitrdPtr;
+    SegmentsToMap[NumSegments].VirtAddr = InitrdVirtPtr;
+    NumSegments++;
+
+    efi_boot_info->initrd = InitrdVirtPtr;
+    efi_boot_info->initrd_size = InitrdSize;
+
+    efi_boot_info->first_free_page = InitrdVirtPtr + (InitrdSize + 4095)/4096 * 4096;
 
     EFI_MEMORY_DESCRIPTOR* EfiMemoryMap;
     UINTN EfiMemoryMapSize;

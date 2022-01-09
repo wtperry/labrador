@@ -10,8 +10,6 @@
 
 vaddr_t curr_brk;
 
-extern void* _kernel_end;
-
 void remap_physical_memory(paddr_t PML4T) {
     // create pointer to first PML4E
     uint64_t* identity_PML4E = (uint64_t*)PML4T;
@@ -125,8 +123,8 @@ boot_info* vmm_preinit(boot_info* info) {
     return fix_boot_info(info);
 }
 
-void vmm_init(void) {
-    curr_brk = PAGE_ALIGN(&_kernel_end);
+void vmm_init(boot_info* info) {
+    curr_brk = info->first_free_page;
 
     register_exception_handler(page_fault_handler, PAGE_FAULT);
 }
