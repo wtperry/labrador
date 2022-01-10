@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch with GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/kernel/kernel.elf",
+            "cwd": "${workspaceFolder}/src",
+            "args": [],
+            "sourceFileMap": {
+                "<source-path>": "<target-path>"
+            },
+            "targetArchitecture": "x86_64",
+            "MIMode": "gdb",
+            "miDebuggerPath": "",
+            "miDebuggerArgs": "",
+            "customLaunchSetupCommands": [
+                {
+                    "text": "source ~/labrador/src/gdbscript"
+                },
+                {
+                    "text": "target remote localhost:1234",
+                    "description": "Connect to QEMU remote debugger"
+                }
+            ],
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

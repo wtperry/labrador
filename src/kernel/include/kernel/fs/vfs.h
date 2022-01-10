@@ -5,6 +5,11 @@
 
 #define FS_FILE         0x01
 #define FS_DIRECTORY    0x02
+#define FS_SYMLINK      0x04
+#define FS_PIPE         0x08
+#define FS_BLOCKDEV     0x10
+#define FS_CHARDEV      0x20
+#define FS_SOCKET       0x40
 
 struct fs_node;
 
@@ -26,6 +31,7 @@ typedef size_t (*getsize_type_t)(struct fs_node* node);
 typedef struct fs_node {
     char name[256];
     uint32_t flags;
+    uint64_t inode_no;
 
     size_t ref_count;
 

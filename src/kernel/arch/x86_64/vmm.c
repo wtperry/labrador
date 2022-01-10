@@ -43,7 +43,7 @@ paddr_t get_PML4T() {
     return PML4T;
 }
 
-void map_page(vaddr_t virt_addr, paddr_t phys_addr) {
+void map_page(vaddr_t virt_addr, paddr_t phys_addr) {    
     paddr_t PML4T = get_PML4T();
 
     uint16_t PML4T_index = (virt_addr >> 39) & 0x1ff;
@@ -92,6 +92,8 @@ void map_page(vaddr_t virt_addr, paddr_t phys_addr) {
 
     uint64_t* PTE = ((uint64_t*)PT + PT_index);
     *(uint64_t*)PHYS_TO_VIRT(PTE) = (((uint64_t)phys_addr & PAGE_ADDR_MASK) | PAGE_PRESENT | PAGE_WRITEABLE);
+
+    memset((void*)virt_addr, 0, PAGE_SIZE);
 }
 
 void page_fault_handler(struct exception_data* ex_data) {

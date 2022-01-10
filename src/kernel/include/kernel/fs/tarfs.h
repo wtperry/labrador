@@ -1,5 +1,11 @@
 #pragma once
 
+#define TAR_BLOCK_SIZE 512
+
+#define TAR_TYPE_FILE '0'
+#define TAR_TYPE_AFILE '\0'
+#define TAR_TYPE_DIR '5'
+
 typedef struct tar_hdr {
     char name[100];
     char mode[8];

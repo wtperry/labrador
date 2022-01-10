@@ -22,7 +22,7 @@ static fs_node_t* tmpfs_node_from_file(tmpfs_file_t* file);
 size_t tmpfs_read(fs_node_t* node, size_t offset, size_t size, uint8_t* buffer) {
     tmpfs_file_t* file = (tmpfs_file_t*)node->device;
 
-    if (offset > file->length) {
+    if (offset >= file->length) {
         size = 0;
     } else if (offset + size > file->length) {
         size = file->length - offset;
@@ -39,7 +39,7 @@ size_t tmpfs_read(fs_node_t* node, size_t offset, size_t size, uint8_t* buffer) 
             to_read_size -= to_read_offset;
         }
         if (block == end_block) {
-            to_read_size = (offset + size) % BLOCK_SIZE;
+            to_read_size = ((offset + size) % BLOCK_SIZE) - to_read_offset;
         }
 
         memcpy(buffer, file->blocks[block] + to_read_offset, to_read_size);
@@ -79,7 +79,7 @@ size_t tmpfs_write(fs_node_t* node, size_t offset, size_t size, const uint8_t* b
             to_write_size -= to_write_offset;
         }
         if (block == end_block) {
-            to_write_size = (offset + size) % BLOCK_SIZE;
+            to_write_size = (offset + size) % BLOCK_SIZE - to_write_offset;
         }
 
         memcpy(file->blocks[block] + to_write_offset, buffer, to_write_size);
