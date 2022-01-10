@@ -25,9 +25,10 @@ tree_node_t* get_deepest_tree_node(char* path, size_t depth, char** out_ptr, siz
             if (!strcmp(curr_path, curr_entry->name)) {
                 curr_node = child_node;
                 found = 1;
-                curr_path += strlen(curr_path);
+                curr_path += strlen(curr_path) + 1;
                 break;
             }
+            child = child->next;
         }
 
         if (!found) {
@@ -104,8 +105,11 @@ int vfs_mount(const char* fs_type, const char* device, const char* mount_path) {
         }
 
         if (!(mount_node->flags & FS_DIRECTORY)) {
+            kfree(mount_node);
             return -1;
-        } 
+        }
+
+        kfree(mount_node);
     }
 
     fs_driver_t* fs_driver = get_driver(fs_type);
@@ -135,12 +139,9 @@ int vfs_mount(const char* fs_type, const char* device, const char* mount_path) {
         vfs_entry_t* new_entry = kmalloc(sizeof(vfs_entry_t));
         new_entry->file = new_file;
         new_entry->name = strdup(new_file->name);
-
-        tree_node_t* new_node = tree_node_create(new_entry);
         
-        tree_node_insert_child(fs_tree, curr_node, new_node);
+        curr_node = tree_node_insert_child(fs_tree, curr_node, new_entry);
 
-        curr_node = new_node;
         curr_depth++;
         curr_path += strlen(curr_path);
     }
@@ -174,7 +175,8 @@ fs_node_t* vfs_get_fs_node(const char* path) {
         return NULL;
     }
 
-    fs_node_t* curr_fs_node = mount_node;
+    fs_node_t* curr_fs_node = kmalloc(sizeof(*curr_fs_node));
+    memcpy(curr_fs_node, mount_node, sizeof(fs_node_t));
 
     for (; curr_depth < depth; curr_depth++) {
         fs_node_t* new_fs_node = vfs_finddir(curr_fs_node, curr_path);
@@ -368,7 +370,10 @@ int vfs_create(const char* path) {
         return -1;
     }
 
-    return parent->create(parent, name);
+    int retval = parent->create(parent, name);
+    kfree(parent);
+
+    return retval;
 }
 
 int vfs_remove(const char* path) {
@@ -416,7 +421,10 @@ int vfs_mkdir(const char* path) {
         return -1;
     }
 
-    return parent->mkdir(parent, name);
+    int retval = parent->mkdir(parent, name);
+    kfree(parent);
+
+    return retval;
 }
 
 size_t vfs_getsize(struct fs_node* node) {

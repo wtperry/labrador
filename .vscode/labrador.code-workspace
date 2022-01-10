@@ -13,7 +13,10 @@
 			"ctype.h": "c",
 			"stdbool.h": "c",
 			"list.h": "c",
-			"tree.h": "c"
+			"tree.h": "c",
+			"devfs.h": "c",
+			"vfs.h": "c",
+			"string.h": "c"
 		}
 	}
 }

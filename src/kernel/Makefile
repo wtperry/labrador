@@ -36,11 +36,13 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
 kernel/heap.o \
+kernel/dev/ramdisk.o \
 kernel/ds/tree.o \
 kernel/ds/list.o \
 kernel/fs/vfs.o \
 kernel/fs/tmpfs.o \
 kernel/fs/tarfs.o \
+kernel/fs/devfs.o \
 
 #OBJS=\
 $(ARCHDIR)/crti.o \

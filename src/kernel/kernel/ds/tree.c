@@ -23,6 +23,7 @@ void tree_destroy_node(tree_node_t* node) {
 
 void tree_node_insert_child_node(tree_t* tree, tree_node_t* parent, tree_node_t* child) {
     list_append(parent->children, child);
+    child->parent = parent;
 
     tree->nodes++;
 }

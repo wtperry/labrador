@@ -41,12 +41,16 @@ void init_heap() {
 void* kmalloc(size_t size) {
     size = (size + HEAP_ALIGN - 1)/HEAP_ALIGN * HEAP_ALIGN;
 
+    if (!next_free) {
+        next_free = expand_heap(size);
+    }
+
     struct mem_header* block = next_free;
 
     while (block) {
         if (!block->used && block->size >= size) {
-            if (block->size > size + sizeof(struct mem_header)) {
-                struct mem_header* new_block = (struct mem_header*)((size_t)block + sizeof(struct mem_header) + size);
+            if (block->size > size + sizeof(struct mem_header) + HEAP_ALIGN) {
+                struct mem_header* new_block = (struct mem_header*)((uintptr_t)block + sizeof(struct mem_header) + size);
                 new_block->next = block->next;
                 new_block->prev = block;
                 new_block->used = false;
@@ -60,7 +64,9 @@ void* kmalloc(size_t size) {
 
             block->used = true;
 
-            next_free = block->next;
+            if (next_free == block) {
+                next_free = block->next;
+            }
             
             while (next_free && next_free->used) {
                 next_free = next_free->next;

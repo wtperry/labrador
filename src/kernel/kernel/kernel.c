@@ -2,9 +2,11 @@
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
+#include <kernel/dev/ramdisk.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/tmpfs.h>
 #include <kernel/fs/tarfs.h>
+#include <kernel/fs/devfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -20,6 +22,29 @@ const char* MemoryTypeStrings[] = {
 	"Efi Runtime",
 	"Other"
 };
+
+void ls(fs_node_t* node, size_t nested, const char* path) {
+	size_t i = 2;
+	dirent_t* dirent;
+
+	while (dirent = vfs_readdir(node, i++)) {
+		for (size_t j = 0; j < nested; j++) {
+			printf("    ");
+		}
+
+		printf("%s\n", dirent->name);
+
+		char new_path[256];
+		strcpy(new_path, path);
+		strncat(new_path, "/", 256);
+		strncat(new_path, dirent->name, 256);
+
+		fs_node_t* child = vfs_get_fs_node(new_path);
+		ls(child, nested + 1, new_path);
+		kfree(child);
+		kfree(dirent);
+	}
+}
 
 void kernel_main(boot_info* info) {
 	info = vmm_preinit(info);
@@ -68,36 +93,20 @@ void kernel_main(boot_info* info) {
 		}
 	}
 
-	fs_node_t* root_dir = vfs_get_fs_node("/");
-
-	vfs_mkdir("/test");
-	vfs_mkdir("/wazzup");
-	printf("%i\n", vfs_create("/wazzup/test.txt"));
-
-	const char msg[] = "Hello filesystem world!";
-
-	fs_node_t* node = vfs_get_fs_node("/wazzup/test.txt");
-
-	vfs_write(node, 0, strlen(msg) + 1, msg);
-
-	char msg_out[256];
-
-	vfs_read(node, 0, 256, msg_out);
-
-	printf("%s\n", msg_out);
-
-	size_t index = 0;
-	dirent_t* dirent = vfs_readdir(root_dir, index);
-
-	while(dirent) {
-		printf("%s\n", dirent->name);
-		kfree(dirent);
-		dirent = vfs_readdir(root_dir, ++index);
-	}
+	vfs_mkdir("/dev");
+	devfs_install();
 
 	printf("%.16lx    %lx\n", info->initrd, info->initrd_size);
 
 	printf("Total Memory Used: %liKB\n", pmm_get_used_memory()/1024);
+
+	ramdisk_init();
+	create_ramdisk_from_address(info->initrd, info->initrd_size, RAMDISK_READ_ONLY, "ram0");
+
+	vfs_mkdir("/boot");
+	vfs_mount("tar", "/dev/ram0", "/boot");
+
+	ls(vfs_get_fs_node("/"), 0, "");
 
 	while (1) {
 		asm("hlt");

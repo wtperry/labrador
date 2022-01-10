@@ -31,14 +31,16 @@ cdimage.iso: binaries
 run: cdimage.iso
 	@$(QEMU) $(QEMUFLAGS) &
 
-debug: cdimage.iso
+run_for_debug: cdimage.iso
 	@LINE=$$(cat debug.log | awk '/BOOTX64.EFI/,0' | grep -m1 'Loading'); \
 	BASE=$$(echo $$LINE | cut -d " " -f4); \
 	ADDR=$$(readpe -H bootloader/BOOTX64.EFI | grep 'Address of .text section:' | tr ' ' '\n' | tail -n1); \
 	TEXT=$$(python -c "print(hex($$BASE+$$ADDR))"); \
-	echo "add-symbol-file bootloader/BOOTX64.EFI $$TEXT" > gdbscript; \
-	echo "add-symbol-file kernel/kernel.elf" >> gdbscript
-	@$(QEMU) $(QEMUFLAGS) -s -S &
+	echo "add-symbol-file ~/labrador/src/bootloader/BOOTX64.EFI $$TEXT" > gdbscript; \
+	echo "add-symbol-file ~/labrador/src/kernel/kernel.elf" >> gdbscript
+	$(QEMU) $(QEMUFLAGS) -s -S &
+
+debug: run_for_debug
 	@gdb -ex 'source gdbscript' -ex 'target remote localhost:1234'
 
 install-headers:
