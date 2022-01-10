@@ -15,7 +15,7 @@ typedef struct tarfs {
     fs_node_t* tar_file;
 } tarfs_t;
 
-static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file);
+static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file, size_t offset);
 
 static size_t oct2bin(const char* str, size_t size) {
     size_t n = 0;
@@ -134,7 +134,7 @@ static dirent_t* tarfs_readdir(fs_node_t* node, size_t index) {
     char dir_name[256];
     dir_name[0] = '\0';
 
-    vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr);
+    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), &hdr);
 
     strncat(dir_name, hdr.prefix, 155);
     strncat(dir_name, hdr.name, 100);
@@ -147,7 +147,7 @@ static dirent_t* tarfs_readdir(fs_node_t* node, size_t index) {
         filename[0] = '\0';
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
-        if (count_slashes(filename) == dir_depth + 1 && memcmp(dir_name, filename, dir_name_len)) {
+        if (count_slashes(filename) == dir_depth + 1 && !memcmp(dir_name, filename, dir_name_len)) {
             to_find--;
 
             if (!to_find) {
@@ -188,7 +188,7 @@ static fs_node_t* tarfs_finddir_root(fs_node_t* node, const char* name) {
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
         if (!memcmp(filename, name, strlen(name))) {
-            return tarfs_node_from_hdr(&hdr, tar_file);
+            return tarfs_node_from_hdr(&hdr, tar_file, curr_offset);
         }
 
         size_t size = oct2bin(hdr.size, 11);
@@ -199,6 +199,33 @@ static fs_node_t* tarfs_finddir_root(fs_node_t* node, const char* name) {
 }
 
 static fs_node_t* tarfs_finddir(fs_node_t* node, const char* name) {
+    fs_node_t* tar_file = (fs_node_t*)node->device;
+
+    size_t curr_offset = 0;
+    tar_hdr_t hdr;
+
+    char dir_name[256];
+    dir_name[0] = '\0';
+
+    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), &hdr);
+
+    strncat(dir_name, hdr.prefix, 155);
+    strncat(dir_name, hdr.name, 100);
+    strncat(dir_name, name, 256);
+
+    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr)) {
+        char filename[256];
+        filename[0] = '\0';
+        strncat(filename, hdr.prefix, 155);
+        strncat(filename, hdr.name, 100);
+        if (!memcmp(filename, dir_name, strlen(dir_name))) {
+            return tarfs_node_from_hdr(&hdr, tar_file, curr_offset);
+        }
+
+        size_t size = oct2bin(hdr.size, 11);
+        curr_offset += TAR_BLOCK_SIZE + ((size-1)/TAR_BLOCK_SIZE + 1) * TAR_BLOCK_SIZE;
+    }
+
     return NULL;
 }
 
@@ -206,7 +233,7 @@ size_t tarfs_getsize(fs_node_t* node) {
 
 }
 
-static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file) {
+static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file, size_t offset) {
     fs_node_t* node = kmalloc(sizeof(*node));
     memset(node, 0, sizeof(*node));
     strncat(node->name, hdr->prefix, 155);
@@ -219,7 +246,9 @@ static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file) {
         node->finddir = &tarfs_finddir;
         node->readdir = &tarfs_readdir;
     }
+
     node->device = tar_file;
+    node->inode_no = offset;
 
     char* ptr = node->name + strlen(node->name) - 1;
     while (ptr > node->name) {
