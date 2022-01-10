@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #define INIT_HEAP_PAGES 1
 
@@ -93,6 +94,7 @@ void kfree(void* ptr) {
     }
 
     struct mem_header* to_free = (struct mem_header*)((size_t)ptr - sizeof(struct mem_header));
+    memset(ptr, 0, to_free->size);
     to_free->used = false;
     if (to_free->prev && !to_free->prev->used) {
         to_free->prev->size += to_free->size + sizeof(struct mem_header);

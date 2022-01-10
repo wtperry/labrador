@@ -411,17 +411,19 @@ int vfs_mkdir(const char* path) {
     } else {
         parent = vfs_get_fs_node(parent_path);
     }
-    kfree(parent_path);
 
     if (!parent) {
         return -1;
     }
 
     if (!parent->mkdir) {
+        kfree(parent_path);
+        kfree(parent);
         return -1;
     }
 
     int retval = parent->mkdir(parent, name);
+    kfree(parent_path);
     kfree(parent);
 
     return retval;
