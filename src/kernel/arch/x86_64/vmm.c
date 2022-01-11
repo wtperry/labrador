@@ -126,7 +126,7 @@ boot_info* vmm_preinit(boot_info* info) {
 }
 
 void vmm_init(boot_info* info) {
-    curr_brk = info->first_free_page;
+    curr_brk = (vaddr_t)info->first_free_page;
 
     register_exception_handler(page_fault_handler, PAGE_FAULT);
 }

@@ -48,7 +48,19 @@ static size_t count_slashes(const char* str) {
 }
 
 static size_t tarfs_read(fs_node_t* node, size_t offset, size_t size, uint8_t* buffer) {
-    
+    fs_node_t* tar_file = (fs_node_t*)node->device;
+
+    tar_hdr_t hdr;
+    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), (uint8_t*)&hdr);
+    size_t file_size = oct2bin(hdr.size, 11);
+
+    if (offset >= file_size) {
+        size = 0;
+    } else if (offset + size > file_size) {
+        size = file_size - offset;
+    }
+
+    return vfs_read(tar_file, node->inode_no + TAR_BLOCK_SIZE + offset, size, buffer);
 }
 
 static dirent_t* tarfs_readdir_root(fs_node_t* node, size_t index) {
@@ -74,11 +86,14 @@ static dirent_t* tarfs_readdir_root(fs_node_t* node, size_t index) {
     size_t to_find = index + 1;
     tar_hdr_t hdr;
 
-    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr)) {
+    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), (uint8_t*)&hdr)) {
         char filename[256];
         filename[0] = '\0';
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
+        if (!filename[0]) {
+            break;
+        }
         if (!count_slashes(filename) && strcmp(filename, "")) {
             to_find--;
 
@@ -134,7 +149,7 @@ static dirent_t* tarfs_readdir(fs_node_t* node, size_t index) {
     char dir_name[256];
     dir_name[0] = '\0';
 
-    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), &hdr);
+    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), (uint8_t*)&hdr);
 
     strncat(dir_name, hdr.prefix, 155);
     strncat(dir_name, hdr.name, 100);
@@ -142,11 +157,14 @@ static dirent_t* tarfs_readdir(fs_node_t* node, size_t index) {
     size_t dir_name_len = strlen(dir_name);
     size_t dir_depth = count_slashes(dir_name);
 
-    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr)) {
+    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), (uint8_t*)&hdr)) {
         char filename[256];
         filename[0] = '\0';
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
+        if (!filename[0]) {
+            break;
+        }
         if (count_slashes(filename) == dir_depth + 1 && !memcmp(dir_name, filename, dir_name_len)) {
             to_find--;
 
@@ -182,11 +200,14 @@ static fs_node_t* tarfs_finddir_root(fs_node_t* node, const char* name) {
     size_t curr_offset = 0;
     tar_hdr_t hdr;
 
-    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr)) {
+    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), (uint8_t*)&hdr)) {
         char filename[256];
         filename[0] = '\0';
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
+        if (!filename[0]) {
+            break;
+        }
         if (!memcmp(filename, name, strlen(name))) {
             return tarfs_node_from_hdr(&hdr, tar_file, curr_offset);
         }
@@ -207,17 +228,20 @@ static fs_node_t* tarfs_finddir(fs_node_t* node, const char* name) {
     char dir_name[256];
     dir_name[0] = '\0';
 
-    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), &hdr);
+    vfs_read(tar_file, node->inode_no, sizeof(tar_hdr_t), (uint8_t*)&hdr);
 
     strncat(dir_name, hdr.prefix, 155);
     strncat(dir_name, hdr.name, 100);
     strncat(dir_name, name, 256);
 
-    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), &hdr)) {
+    while (vfs_read(tar_file, curr_offset, sizeof(tar_hdr_t), (uint8_t*)&hdr)) {
         char filename[256];
         filename[0] = '\0';
         strncat(filename, hdr.prefix, 155);
         strncat(filename, hdr.name, 100);
+        if (!filename[0]) {
+            break;
+        }
         if (!memcmp(filename, dir_name, strlen(dir_name))) {
             return tarfs_node_from_hdr(&hdr, tar_file, curr_offset);
         }
@@ -240,6 +264,7 @@ static fs_node_t* tarfs_node_from_hdr(tar_hdr_t* hdr, fs_node_t* tar_file, size_
     strncat(node->name, hdr->name, 100);
     if (hdr->type == TAR_TYPE_FILE || hdr->type == TAR_TYPE_AFILE) {
         node->flags = FS_FILE;
+        node->read = &tarfs_read;
     } else if (hdr->type == TAR_TYPE_DIR) {
         node->flags = FS_DIRECTORY;
         node->name[strlen(node->name) - 1] = '\0';

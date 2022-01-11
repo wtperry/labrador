@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <kernel/dev/serial.h>
 
 #define INIT_HEAP_PAGES 1
 
@@ -21,12 +22,17 @@ struct mem_header* heap_start;
 struct mem_header* next_free = 0;
 
 struct mem_header* expand_heap(size_t min_size) {
+    dump_heap();
     size_t num_pages = (min_size + 4095) / 4096;
+    char buff[256];
+    snprintf(buff, 256, "Expanding heap %lu pages\n\r", num_pages);
+    write_serial(buff);
     struct mem_header* new_block = (struct mem_header*) vmm_alloc_region(num_pages);
     new_block->used = false;
     new_block->next = NULL;
     new_block->prev = NULL;
     new_block->size = num_pages * 4096 - sizeof(struct mem_header);
+    dump_heap();
     return new_block;
 }
 
@@ -36,15 +42,17 @@ void init_heap() {
     next_free->next = NULL;
     next_free->prev = NULL;
     next_free->used = false;
-    next_free->size = INIT_HEAP_PAGES * 4096;
+    next_free->size = INIT_HEAP_PAGES * 4096 - sizeof(struct mem_header);
 }
 
 void* kmalloc(size_t size) {
     size = (size + HEAP_ALIGN - 1)/HEAP_ALIGN * HEAP_ALIGN;
 
-    if (!next_free) {
-        next_free = expand_heap(size);
-    }
+    char buff[256];
+    snprintf(buff, 256, "Allocating %lu bytes\n\r", size);
+    write_serial(buff);
+
+    dump_heap();
 
     struct mem_header* block = next_free;
 
@@ -66,19 +74,29 @@ void* kmalloc(size_t size) {
             block->used = true;
 
             if (next_free == block) {
-                next_free = block->next;
-            }
-            
-            while (next_free && next_free->used) {
-                next_free = next_free->next;
+                while (next_free->next && next_free->used) {
+                    next_free = next_free->next;
+                }
+
+                if (next_free->used) {
+                    next_free->next = expand_heap(1);
+                    next_free->next->prev = next_free;
+                    next_free = next_free->next;
+                }
             }
 
-            return (void*)((size_t)block + sizeof(struct mem_header));
+            snprintf(buff, 256, "Allocating %.16lx    %lu bytes\n\r", (uintptr_t)block + sizeof(struct mem_header), block->size);
+            write_serial(buff);
+
+            dump_heap();
+
+            return (void*)((uintptr_t)block + sizeof(struct mem_header));
         }
 
         if (!block->next) {
             block->next = expand_heap(size);
             block->next->prev = block;
+            dump_heap();
         }
 
         block = block->next;
@@ -120,10 +138,11 @@ void kfree(void* ptr) {
 }
 
 void dump_heap() {
-    printf("HEAP:\n");
     struct mem_header* block = heap_start;
     while (block) {
-        printf("addr: %.16lx    size: %lx    used: %d\n", block, block->size, block->used);
+        char buff[256];
+        snprintf(buff, 256, "addr: %.16lx    prev: %.16lx    next: %.16lx    size: %lx    used: %d\n\r", block, block->prev, block->next, block->size, block->used);
+        write_serial(buff);
         block = block->next;
     }
 }

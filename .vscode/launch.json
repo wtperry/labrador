@@ -25,6 +25,9 @@
                 {
                     "text": "target remote localhost:1234",
                     "description": "Connect to QEMU remote debugger"
+                },
+                {
+                    "text": "set can-use-hw-watchpoints 0"
                 }
             ],
             "setupCommands": [

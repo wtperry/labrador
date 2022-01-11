@@ -3,6 +3,7 @@
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
 #include <kernel/dev/ramdisk.h>
+#include <kernel/dev/serial.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/tmpfs.h>
 #include <kernel/fs/tarfs.h>
@@ -17,7 +18,7 @@ void ls(fs_node_t* node, size_t nested, const char* path) {
 	size_t i = 2;
 	dirent_t* dirent;
 
-	while (dirent = vfs_readdir(node, i++)) {
+	while ((dirent = vfs_readdir(node, i++))) {
 		for (size_t j = 0; j < nested; j++) {
 			printf("  ");
 		}
@@ -42,6 +43,9 @@ void kernel_main(boot_info* info) {
 	pmm_init(&info->mmap, info->num_mmap_entries);
 	vmm_init(info);
 	init_heap();
+
+	init_serial();
+	write_serial("Hello serial!\n\r");
 
 	vfs_init();
 	tmpfs_install();
@@ -73,6 +77,13 @@ void kernel_main(boot_info* info) {
 	}
 
 	ls(vfs_get_fs_node("/"), 0, "");
+
+	char buff[256];
+	fs_node_t* file = vfs_get_fs_node("/boot/test123/wow/file.txt");
+
+	vfs_read(file, 0, 256, (uint8_t*)buff);
+
+	printf("%.256s\n", buff);
 
 	while (1) {
 		asm("hlt");
