@@ -11,7 +11,7 @@ void isr_exception_handler(struct exception_data* ex_data) {
         return;
     }
 
-    printf("INTERRUPT: Exception no %x\n", ex_data->int_num);
+    printf("INTERRUPT: Exception no %x, error code: %lu\n", ex_data->int_num, ex_data->error_code);
     printf("rax=%.16x rbx=%.16x rcx=%.16x rdx=%.16x\n", ex_data->rax, ex_data->rbx, ex_data->rcx, ex_data->rdx);
     printf("rsi=%.16x rdi=%.16x rbp=%.16x rsp=%.16x\n", ex_data->rsi, ex_data->rdi, ex_data->rbp, ex_data->user_rsp);
     printf("r8 =%.16x r9 =%.16x r10=%.16x r11=%.16x\n", ex_data->r8, ex_data->r9, ex_data->r10, ex_data->r11);

@@ -20,7 +20,8 @@ typedef struct ramdisk {
 static list_t* ramdisks;
 
 static void ramdisk_expand(ramdisk_t* ramdisk, size_t blocks_to_add) {
-
+    (void)ramdisk;
+    (void)blocks_to_add;
 }
 
 static size_t ramdisk_read(fs_node_t* node, size_t offset, size_t size, uint8_t* buffer) {
@@ -55,6 +56,10 @@ static size_t ramdisk_read(fs_node_t* node, size_t offset, size_t size, uint8_t*
 }
 
 static size_t ramdisk_write(fs_node_t* node, size_t offset, size_t size, const uint8_t* buffer) {
+    (void)node;
+    (void)offset;
+    (void)size;
+    (void)buffer;
     /*
     tmpfs_file_t* file = (tmpfs_file_t*)node->device;
 
@@ -110,7 +115,7 @@ int create_ramdisk_from_address(void* address, size_t size, unsigned int flags, 
     ramdisk->length = size;
 
     for (size_t i = 0; i < ramdisk->num_blocks; i++) {
-        ramdisk->blocks[i] = (uintptr_t)address + BLOCK_SIZE * i;
+        ramdisk->blocks[i] = (uint8_t*)((uintptr_t)address + BLOCK_SIZE * i);
     }
     
     devfs_device_t* device = kmalloc(sizeof(*device));

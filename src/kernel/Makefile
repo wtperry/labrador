@@ -43,6 +43,7 @@ kernel/fs/vfs.o \
 kernel/fs/tmpfs.o \
 kernel/fs/tarfs.o \
 kernel/fs/devfs.o \
+kernel/dev/serial.o \
 
 #OBJS=\
 $(ARCHDIR)/crti.o \

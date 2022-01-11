@@ -14,7 +14,7 @@
 #define PAGE_WRITEABLE (1 << 1)
 
 typedef struct {
-    EFI_PHYSICAL_ADDRESS VirtAddr;
+    EFI_VIRTUAL_ADDRESS VirtAddr;
     EFI_PHYSICAL_ADDRESS PhysAddr;
     size_t NumPages;
 } PageMapping;
@@ -333,7 +333,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     EFI_PHYSICAL_ADDRESS InitrdPtr;
     UINTN InitrdSize;
 
-    void* InitrdVirtPtr;
+    EFI_VIRTUAL_ADDRESS InitrdVirtPtr;
 
     {
         EFI_GUID FileInfoGuid = EFI_FILE_INFO_ID;
@@ -348,7 +348,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         PrintLn(L"");
         
         SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, (InitrdSize-1)/4096 + 1, &InitrdPtr);
-        Status = InitrdFile->Read(InitrdFile, &InitrdSize, InitrdPtr);
+        Status = InitrdFile->Read(InitrdFile, &InitrdSize, (void*)InitrdPtr);
 
         if (EFI_ERROR(Status)) {
             PrintLn(L"Reading Initrd Failed");
@@ -366,10 +366,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     SegmentsToMap[NumSegments].VirtAddr = InitrdVirtPtr;
     NumSegments++;
 
-    efi_boot_info->initrd = InitrdVirtPtr;
+    efi_boot_info->initrd = (void*)InitrdVirtPtr;
     efi_boot_info->initrd_size = InitrdSize;
 
-    efi_boot_info->first_free_page = InitrdVirtPtr + (InitrdSize + 4095)/4096 * 4096;
+    efi_boot_info->first_free_page = (void*)(InitrdVirtPtr + (InitrdSize + 4095)/4096 * 4096);
 
     EFI_MEMORY_DESCRIPTOR* EfiMemoryMap;
     UINTN EfiMemoryMapSize;
