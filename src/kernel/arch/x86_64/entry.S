@@ -4,18 +4,6 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
-.section .data
-gdt64:
-.quad 0x00
-.quad 0x00A09A0000000000
-.quad 0x00A0920000000000
-.quad 0x00A0FA0000000000
-.quad 0x00A0F20000000000
-
-gdt_ptr:
-.word gdt_ptr - gdt64 - 1
-.quad gdt64
-
 .section .text
 .global _start
 .type _start, @function
@@ -27,9 +15,7 @@ _start:
     # Save boot info to pass to kernel
     push %rdi
 
-    movq $gdt_ptr, %rdi
-    call load_gdt
-
+    call init_gdt
     call init_idt
 
     # Call kernel
