@@ -1,37 +1,72 @@
-#include "gdt.h"
+#include <stdint.h>
 
-struct gdt_entry gdt[5];
-struct gdt_ptr gp;
+#define GDT_RING0_CODE  0x00A09A0000000000
+#define GDT_RING0_DATA  0x00A0920000000000
+#define GDT_RING3_CODE  0x00A0FA0000000000
+#define GDT_RING3_DATA  0x00A0F20000000000
+
+struct gdt_entry {
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_middle;
+    uint8_t access;
+    uint8_t limit_high;
+    uint8_t base_high;
+} __attribute__((packed));
+
+struct gdt_entry_high {
+    uint32_t base_highest;
+    uint32_t reserved0;
+};
+
+struct gdt_ptr {
+    uint16_t limit;
+    uint64_t base;
+} __attribute__((packed));
+
+struct gdt {
+    uint64_t entries[5];
+    struct gdt_entry tss_low;
+    struct gdt_entry_high tss_high;
+}; __attribute__((packed));
+
+typedef struct tss_entry {
+	uint32_t reserved_0;
+	uint64_t rsp[3];
+	uint64_t reserved_1;
+	uint64_t ist[7];
+	uint64_t reserved_2;
+	uint16_t reserved_3;
+	uint16_t iomap_base;
+} __attribute__ ((packed));
+
+struct gdt_ptr gdt_ptr;
+struct gdt gdt = {
+    {
+        0x0000000000000000,
+        GDT_RING0_CODE,
+        GDT_RING0_DATA,
+        GDT_RING3_CODE,
+        GDT_RING3_DATA
+    },
+    {0x0000, 0x0000, 0x00, 0xE9, 0x00, 0x00},
+    {0x00000000, 0x00000000}
+};
+
+struct tss_entry tss = {0, {0, 0, 0}, 0, {0, 0, 0, 0, 0, 0, 0}, 0, 0, 0};
 
 extern void load_gdt(uint64_t);
 
-void gdt_set_desc(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags) {
-    gdt[num].base_low = base & 0xFFFF;
-    gdt[num].base_middle = (base >> 16) & 0xFF;
-    gdt[num].base_high = (base >> 24) & 0xFF;
-
-    gdt[num].limit_low = limit & 0xFFFF;
-    gdt[num].limit_high = (limit >> 16) & 0x0F;
-
-    gdt[num].limit_high |= (flags & 0xF0);
-
-    gdt[num].access = access;
-}
-
 void init_gdt() {
-    gp.limit = (sizeof(struct gdt_entry) * 5) - 1;
-    gp.base = (uint64_t)&gdt;
+    uint64_t tss_addr = (uint64_t)&tss;
+    gdt.tss_low.base_low = tss_addr & 0xFFFF;
+    gdt.tss_low.base_middle = (tss_addr >> 16) & 0xFF;
+    gdt.tss_low.base_high = (tss_addr >> 24) & 0xFF;
+    gdt.tss_high.base_highest = (tss_addr >> 32) & 0xFFFFFFFF;
+    gdt.tss_low.limit_low = sizeof(tss);
 
-    // null descriptor
-    gdt_set_desc(0, 0, 0, 0, 0);
-    // kernel code
-    gdt_set_desc(1, 0, 0, GDT_PRESENT | GDT_CODE | GDT_RING0, GDT_FLAG_LONG);
-    // kernel data
-    gdt_set_desc(2, 0, 0, GDT_PRESENT | GDT_DATA | GDT_RING0, GDT_FLAG_LONG);
-    // user code
-    gdt_set_desc(3, 0, 0, GDT_PRESENT | GDT_CODE | GDT_RING3, GDT_FLAG_LONG);
-    // user data
-    gdt_set_desc(4, 0, 0, GDT_PRESENT | GDT_DATA | GDT_RING3, GDT_FLAG_LONG);
+    gdt_ptr.limit = sizeof(struct gdt) - 1;
+    gdt_ptr.base = (uint64_t)&gdt;
 
-    load_gdt((uint64_t)&gp);
+    load_gdt((uint64_t)&gdt_ptr);
 }
