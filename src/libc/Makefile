@@ -6,7 +6,7 @@ AR=$(HOST)-ar
 
 SYSROOT=../sysroot
  
-CFLAGS?=-g
+CFLAGS?=-O3
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
@@ -46,7 +46,6 @@ stdlib/abort.o \
 stdlib/atoi.o \
 stdlib/malloc.o \
 string/memcmp.o \
-string/memcpy.o \
 string/memmove.o \
 string/memset.o \
 string/strlen.o \
