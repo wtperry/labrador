@@ -14,6 +14,8 @@
 #include <string.h>
 #include <bootloader/boot_spec.h>
 
+#include <kernel/arch/acpi.h>
+
 void ls(fs_node_t* node, size_t nested, const char* path) {
 	size_t i = 2;
 	dirent_t* dirent;
@@ -81,9 +83,65 @@ void kernel_main(boot_info* info) {
 	char buff[256];
 	fs_node_t* file = vfs_get_fs_node("/boot/test123/wow/file.txt");
 
-	vfs_read(file, 0, 256, (uint8_t*)buff);
+	size_t file_size = vfs_read(file, 0, 256, (uint8_t*)buff);
+	buff[file_size] = '\0';
 
 	printf("%.256s\n", buff);
+
+	struct RSDP* rsdp = info->rsdp;
+
+	printf("Signature: %.8s\n", rsdp->signature);
+	printf("OEM: %.6s\n", rsdp->oem_id);
+	printf("Revision: %u\n", rsdp->revision);
+
+	if (rsdp->revision == 2) {
+		struct RSDP2* rsdp2 = (struct RSDP2*)rsdp;
+		printf("Length: %u\n", rsdp2->length);
+		printf("XSDT Address %.16lx\n", rsdp2->xsdt_addr);
+		
+		uint8_t sum = 0;
+		for (int i = 0; i < sizeof(struct RSDP2); i++) {
+			sum += ((uint8_t*)rsdp)[i];
+		}
+
+		if (sum == 0) {
+			printf("RSDP checksum validated!\n\n");
+		} else {
+			printf("RSDP checksum failed!\n\n");
+		}
+
+		struct xsdt* xsdt = (struct xsdt*)PHYS_TO_VIRT(rsdp2->xsdt_addr);
+		printf("Signature: %.4s\n", xsdt->hdr.signature);
+		printf("Length: %u\n", xsdt->hdr.length);
+		printf("Revision: %u\n", xsdt->hdr.revision);
+		printf("OEM: %.6s\n", xsdt->hdr.oem_id);
+		printf("OEM Table ID: %.8s\n", xsdt->hdr.oem_table_id);
+		int xsdt_entries = (xsdt->hdr.length - sizeof(xsdt->hdr)) / 8;
+		printf("Entries: %u\n", xsdt_entries);
+
+		for (int i = 0; i < xsdt_entries; i++) {
+			struct sdt_hdr* hdr = (struct sdt_hdr*)PHYS_TO_VIRT(xsdt->sdt_ptrs[i]);
+			printf("Signature: %.4s\n", hdr->signature);
+			if (!memcmp(hdr->signature, "APIC", 4)) {
+				struct madt* madt = (struct madt*)hdr;
+				printf("Local APIC Address: %.8x    Flags: %u\n", madt->lapic_addr, madt->flags);
+				size_t num_apics = 0;
+				struct madt_entry* entry = (struct madt_entry*)(madt->entries);
+				while (((uint64_t)entry - (uint64_t)hdr) < hdr->length) {
+					printf("APIC entry type: %u, length %u\n", entry->type, entry->length);
+					if (entry->type == 0) {
+						num_apics++;
+						struct madt_entry_0* proc = (struct madt_entry_0*)entry;
+						printf("Proc ID: %u    APIC ID: %u    Flags: %u\n", proc->proc_id, proc->apic_id, proc->flags);
+					}
+
+					entry = (struct madt_entry*)((uint64_t)entry + entry->length);
+				}
+
+				printf("%u processors found!\n", num_apics);
+			}
+		}
+	}
 
 	while (1) {
 		asm("hlt");
