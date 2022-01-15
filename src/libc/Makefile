@@ -6,7 +6,7 @@ AR=$(HOST)-ar
 
 SYSROOT=../sysroot
  
-CFLAGS?=-O3
+CFLAGS?=-g
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
