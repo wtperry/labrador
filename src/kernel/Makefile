@@ -5,7 +5,7 @@ CC=$(HOST)-gcc
 
 SYSROOT=../sysroot
 
-CFLAGS?=-g
+CFLAGS?=-O3
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
