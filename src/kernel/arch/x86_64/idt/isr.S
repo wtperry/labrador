@@ -154,3 +154,4 @@ isr_stub_table:
 .quad _isr_exception_30
 .quad _isr_exception_31
 .quad _isr_32
+.quad _isr_33

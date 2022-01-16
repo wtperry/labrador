@@ -54,8 +54,8 @@ void ps2_init(void) {
     outb(PS2_DATA, config_byte);
 
     // Setup Interrupts
-    ioapic_set_irq(KEYBOARD_IRQ, 0, 32);
     register_exception_handler(&kbd_irq_handler, 32);
+    ioapic_set_irq(KEYBOARD_IRQ, 0, 32);
 
     // Perform self test
     outb(PS2_COMMAND, 0xAA);
