@@ -22,17 +22,17 @@ struct mem_header* heap_start;
 struct mem_header* next_free = 0;
 
 struct mem_header* expand_heap(size_t min_size) {
-    dump_heap();
+    //dump_heap();
     size_t num_pages = (min_size + 4095) / 4096;
-    char buff[256];
-    snprintf(buff, 256, "Expanding heap %lu pages\n\r", num_pages);
-    write_serial(buff);
+    //char buff[256];
+    //snprintf(buff, 256, "Expanding heap %lu pages\n\r", num_pages);
+    //write_serial(buff);
     struct mem_header* new_block = (struct mem_header*) vmm_alloc_region(num_pages);
     new_block->used = false;
     new_block->next = NULL;
     new_block->prev = NULL;
     new_block->size = num_pages * 4096 - sizeof(struct mem_header);
-    dump_heap();
+    //dump_heap();
     return new_block;
 }
 
@@ -48,11 +48,11 @@ void init_heap() {
 void* kmalloc(size_t size) {
     size = (size + HEAP_ALIGN - 1)/HEAP_ALIGN * HEAP_ALIGN;
 
-    char buff[256];
-    snprintf(buff, 256, "Allocating %lu bytes\n\r", size);
-    write_serial(buff);
+    //char buff[256];
+    //snprintf(buff, 256, "Allocating %lu bytes\n\r", size);
+    //write_serial(buff);
 
-    dump_heap();
+    //dump_heap();
 
     struct mem_header* block = next_free;
 
@@ -85,10 +85,10 @@ void* kmalloc(size_t size) {
                 }
             }
 
-            snprintf(buff, 256, "Allocating %.16lx    %lu bytes\n\r", (uintptr_t)block + sizeof(struct mem_header), block->size);
-            write_serial(buff);
+            //snprintf(buff, 256, "Allocating %.16lx    %lu bytes\n\r", (uintptr_t)block + sizeof(struct mem_header), block->size);
+            //write_serial(buff);
 
-            dump_heap();
+            //dump_heap();
 
             return (void*)((uintptr_t)block + sizeof(struct mem_header));
         }

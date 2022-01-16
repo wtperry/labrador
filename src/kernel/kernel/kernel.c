@@ -18,6 +18,7 @@
 #include <kernel/arch/apic.h>
 #include <kernel/arch/ps2.h>
 #include <kernel/arch/cpu.h>
+#include <kernel/arch/pit.h>
 
 void ls(fs_node_t* node, size_t nested, const char* path) {
 	size_t i = 2;
@@ -155,6 +156,7 @@ void kernel_main(boot_info* info) {
 	apic_init();
 	//ps2_init();
 	enable_interrupts();
+	pit_init();
 
 	while (1) {
 		asm("hlt");
