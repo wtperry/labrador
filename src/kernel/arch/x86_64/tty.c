@@ -1,3 +1,7 @@
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
 #include <kernel/tty.h>
 
 static size_t terminal_hres;
@@ -18,10 +22,8 @@ static uint16_t pixels_per_scan_line;
 static PSF1_FONT* font;
 
 void terminal_scroll() {
-    for (size_t y = 0; y < (terminal_height-1) * font->psf1_header->charsize; y++) {
-        for (size_t x = 0; x < terminal_width * 8; x++) {
-            *(terminal_buffer + y * pixels_per_scan_line + x) = *(terminal_buffer + (y + font->psf1_header->charsize) * pixels_per_scan_line + x);
-        }
+    for (size_t y = 0; y < (terminal_height - 1) * font->psf1_header->charsize; y++) {
+        memcpy(terminal_buffer + y * pixels_per_scan_line, terminal_buffer + (y + font->psf1_header->charsize) * pixels_per_scan_line, terminal_hres * sizeof(*terminal_buffer));
     }
 
     for (size_t y = (terminal_height-1) * font->psf1_header->charsize; y < terminal_height * font->psf1_header->charsize; y++) {
