@@ -57,3 +57,19 @@ struct madt_entry_0 {
     uint8_t apic_id;
     uint32_t flags;
 } __attribute__((packed));
+
+struct madt_entry_1 {
+    struct madt_entry hdr;
+    uint8_t ioapic_id;
+    uint8_t reserved;
+    uint32_t ioapic_addr;
+    uint32_t int_base;
+} __attribute__((packed));
+
+struct madt_entry_2 {
+    struct madt_entry hdr;
+    uint8_t bus;
+    uint8_t irq;
+    uint32_t int_num;
+    uint16_t flags;
+} __attribute__((packed));

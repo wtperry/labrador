@@ -3,14 +3,21 @@
 .macro ISR_ERR_CODE n
 _isr_exception_\n\():
     push $\n     #push int number
-    jmp isr_exception_common
+    jmp isr_common
 .endm
 
 .macro ISR_NO_ERR_CODE n
 _isr_exception_\n\():
     push $0      #push dummy error code
     push $\n     #push int number
-    jmp isr_exception_common
+    jmp isr_common
+.endm
+
+.macro IRQ n
+_isr_\n\():
+    push $0      #push dummy error code
+    push $\n     #push int number
+    jmp isr_common
 .endm
 
 .section .text
@@ -46,8 +53,10 @@ ISR_NO_ERR_CODE 28
 ISR_NO_ERR_CODE 29
 ISR_NO_ERR_CODE 30
 ISR_NO_ERR_CODE 31
+IRQ 32
+IRQ 33
 
-isr_exception_common:
+isr_common:
     push %rdi
     push %rsi
     push %rbp
@@ -80,7 +89,7 @@ isr_exception_common:
     mov %ax, %fs
     mov %ax, %gs
     mov %rsp, %rdi  # exception data struct
-    call isr_exception_handler
+    call isr_handler
     pop %rax
     pop %rax
     mov %ax, %gs
@@ -144,3 +153,4 @@ isr_stub_table:
 .quad _isr_exception_29
 .quad _isr_exception_30
 .quad _isr_exception_31
+.quad _isr_32

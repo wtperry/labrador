@@ -15,6 +15,9 @@
 #include <bootloader/boot_spec.h>
 
 #include <kernel/arch/acpi.h>
+#include <kernel/arch/apic.h>
+#include <kernel/arch/ps2.h>
+#include <kernel/arch/cpu.h>
 
 void ls(fs_node_t* node, size_t nested, const char* path) {
 	size_t i = 2;
@@ -133,6 +136,12 @@ void kernel_main(boot_info* info) {
 						num_apics++;
 						struct madt_entry_0* proc = (struct madt_entry_0*)entry;
 						printf("Proc ID: %u    APIC ID: %u    Flags: %u\n", proc->proc_id, proc->apic_id, proc->flags);
+					} else if (entry->type == 1) {
+						struct madt_entry_1* ioapic = (struct madt_entry_1*)entry;
+						printf("IO APIC ID: %u    IO APIC Addr: %.16lx    Interrupt Base: %x\n", ioapic->ioapic_id, ioapic->ioapic_addr, ioapic->int_base);
+					} else if (entry->type == 2) {
+						struct madt_entry_2* src = (struct madt_entry_2*)entry;
+						printf("Bus: %u    IRQ: %u    Interrupt Num: %x    Flags %x\n", src->bus, src->irq, src->int_num, src->flags);
 					}
 
 					entry = (struct madt_entry*)((uint64_t)entry + entry->length);
@@ -142,6 +151,10 @@ void kernel_main(boot_info* info) {
 			}
 		}
 	}
+
+	apic_init();
+	//ps2_init();
+	enable_interrupts();
 
 	while (1) {
 		asm("hlt");
