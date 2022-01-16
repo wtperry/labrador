@@ -96,6 +96,28 @@ void map_page(vaddr_t virt_addr, paddr_t phys_addr) {
     memset((void*)virt_addr, 0, PAGE_SIZE);
 }
 
+uint64_t* get_pte(vaddr_t virt_addr) {
+    paddr_t PML4T = get_PML4T();
+
+    uint16_t PML4T_index = (virt_addr >> 39) & 0x1ff;
+    uint16_t PDPT_index = (virt_addr >> 30) & 0x1ff;
+    uint16_t PDT_index = (virt_addr >> 21) & 0x1ff;
+    uint16_t PT_index = (virt_addr >> 12) & 0x1ff;
+
+    uint64_t* PML4E = ((uint64_t*)PML4T + PML4T_index);
+    paddr_t PDPT = (*(uint64_t*)PHYS_TO_VIRT(PML4E) & PAGE_ADDR_MASK);
+
+    uint64_t* PDPE = ((uint64_t*)PDPT + PDPT_index);
+    paddr_t PDT = (*(uint64_t*)PHYS_TO_VIRT(PDPE) & PAGE_ADDR_MASK);
+
+    uint64_t* PDE = ((uint64_t*)PDT + PDT_index);
+    paddr_t PT = (*(uint64_t*)PHYS_TO_VIRT(PDE) & PAGE_ADDR_MASK);
+
+    uint64_t* PTE = ((uint64_t*)PT + PT_index);
+
+    return (uint64_t)PHYS_TO_VIRT(PTE);
+}
+
 void page_fault_handler(struct exception_data* ex_data) {
     printf("Page Fault!\n");
     printf("Error code: %.16lx\n", ex_data->error_code);
