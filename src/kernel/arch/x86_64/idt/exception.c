@@ -3,19 +3,19 @@
 #include <stdio.h>
 #include "exception.h"
 
-void (*handlers[32])(struct exception_data*);
+void (*handlers[34])(struct exception_data*);
 
-void isr_exception_handler(struct exception_data* ex_data) {
+void isr_handler(struct exception_data* ex_data) {
     if (handlers[ex_data->int_num]) {
         handlers[ex_data->int_num](ex_data);
         return;
     }
 
     printf("INTERRUPT: Exception no %x, error code: %lu\n", ex_data->int_num, ex_data->error_code);
-    printf("rax=%.16x rbx=%.16x rcx=%.16x rdx=%.16x\n", ex_data->rax, ex_data->rbx, ex_data->rcx, ex_data->rdx);
-    printf("rsi=%.16x rdi=%.16x rbp=%.16x rsp=%.16x\n", ex_data->rsi, ex_data->rdi, ex_data->rbp, ex_data->user_rsp);
-    printf("r8 =%.16x r9 =%.16x r10=%.16x r11=%.16x\n", ex_data->r8, ex_data->r9, ex_data->r10, ex_data->r11);
-    printf("r12=%.16x r13=%.16x r14=%.16x r15=%.16x\n", ex_data->r12, ex_data->r13, ex_data->r14, ex_data->r15);
+    printf("rax=%.16lx rbx=%.16lx rcx=%.16lx rdx=%.16lx\n", ex_data->rax, ex_data->rbx, ex_data->rcx, ex_data->rdx);
+    printf("rsi=%.16lx rdi=%.16lx rbp=%.16lx rsp=%.16lx\n", ex_data->rsi, ex_data->rdi, ex_data->rbp, ex_data->user_rsp);
+    printf("r8 =%.16lx r9 =%.16lx r10=%.16lx r11=%.16lx\n", ex_data->r8, ex_data->r9, ex_data->r10, ex_data->r11);
+    printf("r12=%.16lx r13=%.16lx r14=%.16lx r15=%.16lx\n", ex_data->r12, ex_data->r13, ex_data->r14, ex_data->r15);
     printf("cs=%.4x ds=%.4x es=%.4x fs=%.4x gs=%.4x ss=%.4x\n", ex_data->cs, ex_data->ds, ex_data->es, ex_data->fs, ex_data->gs, ex_data->ss);
     printf("Halting kernel...\n");
     
@@ -25,7 +25,7 @@ void isr_exception_handler(struct exception_data* ex_data) {
 }
 
 void init_exceptions() {
-    for (size_t i = 0; i < 32; i++) {
+    for (size_t i = 0; i < 34; i++) {
         handlers[i] = 0;
     }
 }

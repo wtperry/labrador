@@ -48,12 +48,12 @@ void init_idt() {
     idtr.base = (uint64_t)&idt;
 
     //fill first 32 with exception handlers
-    for (size_t i = 0; i < 32; i++) {
+    for (size_t i = 0; i < 34; i++) {
         idt_set_gate(i, isr_stub_table[i], 0x08, IDT_FLAGS_INTERRUPT);
     }
 
     // fill rest with default handlers
-    for (int i = 32; i < MAX_INTERRUPTS; i++) {
+    for (int i = 34; i < MAX_INTERRUPTS; i++) {
         idt_set_gate(i, (uint64_t)&default_handler, 0x08, IDT_FLAGS_INTERRUPT);
     }
 
