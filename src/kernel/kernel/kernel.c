@@ -132,7 +132,6 @@ void kernel_main(boot_info* info) {
 				size_t num_apics = 0;
 				struct madt_entry* entry = (struct madt_entry*)(madt->entries);
 				while (((uint64_t)entry - (uint64_t)hdr) < hdr->length) {
-					printf("APIC entry type: %u, length %u\n", entry->type, entry->length);
 					if (entry->type == 0) {
 						num_apics++;
 						struct madt_entry_0* proc = (struct madt_entry_0*)entry;
@@ -149,14 +148,21 @@ void kernel_main(boot_info* info) {
 				}
 
 				printf("%u processors found!\n", num_apics);
+			} else if (!memcmp(hdr->signature, "HPET", 4)) {
+				struct hpet *hpet = (struct hpet*)hdr;
+				printf("HPET Num: %u\n", hpet->hpet_number);
+				printf("HPET Base Addr: %.16lx\n", hpet->address.address);
+				printf("Minimum clock ticks: %u\n", hpet->minimum_tick);
 			}
+
+			printf("\n");
 		}
 	}
 
 	apic_init();
 	//ps2_init();
 	enable_interrupts();
-	pit_init();
+	//pit_init();
 
 	while (1) {
 		asm("hlt");
