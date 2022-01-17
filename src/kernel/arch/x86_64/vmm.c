@@ -123,12 +123,16 @@ void page_fault_handler(struct exception_data* ex_data) {
     printf("Error code: %.16lx\n", ex_data->error_code);
 
     if (!(ex_data->error_code & 1)) {
-        printf("Page not present!\n");
-        printf("Virt_Addr: %.16lx\n", ex_data->cr2);
+        uint64_t cr2;
 
-        if (ex_data->cr2 && ex_data->cr2 <= curr_brk) {
+        asm volatile ("movq %%cr2, %0" : "=r"(cr2));
+
+        printf("Page not present!\n");
+        printf("Virt_Addr: %.16lx\n", cr2);
+
+        if (cr2 && cr2 <= curr_brk) {
             printf("Address before brk\n");
-            map_page((ex_data->cr2 & 0xFFFFFFFFFFFFF000), allocate_page());
+            map_page((cr2 & 0xFFFFFFFFFFFFF000), allocate_page());
             return;
         }
     }
