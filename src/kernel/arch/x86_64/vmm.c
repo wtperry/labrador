@@ -118,7 +118,7 @@ uint64_t* get_pte(vaddr_t virt_addr) {
     return (uint64_t)PHYS_TO_VIRT(PTE);
 }
 
-void page_fault_handler(struct exception_data* ex_data) {
+void page_fault_handler(struct interrupt_data* ex_data) {
     printf("Page Fault!\n");
     printf("Error code: %.16lx\n", ex_data->error_code);
 

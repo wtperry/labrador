@@ -90,3 +90,18 @@ void list_remove(list_t* list, list_node_t* node) {
 
     kfree(node);
 }
+
+void *list_pop_front(list_t* list) {
+    list_node_t *node = list->head;
+    void *retval;
+
+    if (node) {
+        retval = node->value;
+    } else {
+        retval = NULL;
+    }
+
+    list_remove(list, node);
+
+    return retval;
+}

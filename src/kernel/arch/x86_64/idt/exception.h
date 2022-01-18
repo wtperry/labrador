@@ -4,7 +4,7 @@
 
 #define PAGE_FAULT 14
 
-struct exception_data {
+struct interrupt_data {
     uint64_t gs, fs, es, ds;
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
     uint64_t rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi;
@@ -13,4 +13,4 @@ struct exception_data {
 };
 
 void init_exceptions(void);
-void register_exception_handler(void (*)(struct exception_data*), uint8_t);
+void register_exception_handler(void (*)(struct interrupt_data*), uint8_t);

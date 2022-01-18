@@ -19,6 +19,22 @@
 #include <kernel/arch/ps2.h>
 #include <kernel/arch/cpu.h>
 #include <kernel/arch/pit.h>
+#include <kernel/tasking.h>
+
+thread_t *thread1;
+thread_t *thread2;
+
+void task1(void) {
+	while (1) {
+		write_serial("A");
+	}
+}
+
+void task2(void) {
+	while (1) {
+		write_serial("B");
+	}
+}
 
 void ls(fs_node_t* node, size_t nested, const char* path) {
 	size_t i = 2;
@@ -161,8 +177,18 @@ void kernel_main(boot_info* info) {
 
 	apic_init();
 	//ps2_init();
+	pit_init();
+
+	tasking_init();
+
+	thread1 = create_task(&task1);
+	thread2 = create_task(&task2);
+
 	enable_interrupts();
-	//pit_init();
+	
+	while (1) {
+		printf("main!");
+	}
 
 	while (1) {
 		asm("hlt");
