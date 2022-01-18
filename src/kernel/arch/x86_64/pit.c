@@ -7,6 +7,8 @@
 #include <kernel/arch/cpu.h>
 #include "idt/exception.h"
 
+#include <kernel/tasking.h>
+
 #define PIT_DATA_0      0x40
 #define PIT_DATA_1      0x41
 #define PIT_DATA_2      0x42
@@ -35,12 +37,10 @@
 
 uint64_t ticks;
 
-static void pit_isr(struct exception_data *r) {
-    ticks++;
-    if (ticks % 1000 == 0) {
-        printf("1 second!\n");
-    }
+static void pit_isr(struct interrupt_data *r) {
+    printf("Switch!");
     apic_eoi();
+    switch_next();
 }
 
 void pit_init(void) {
@@ -50,6 +50,6 @@ void pit_init(void) {
     ioapic_set_irq(PIT_IRQ, 0, PIT_INTERRUPT);
 
     outb(PIT_COMMAND, PIT_COUNTER_0 | PIT_BOTH | PIT_MODE_2);
-    outb(PIT_DATA_0, (PIT_FREQ/1000) & 0xFF);
-    outb(PIT_DATA_0, ((PIT_FREQ/1000) >> 8) & 0xFF);
+    outb(PIT_DATA_0, (PIT_FREQ/100) & 0xFF);
+    outb(PIT_DATA_0, ((PIT_FREQ/100) >> 8) & 0xFF);
 }

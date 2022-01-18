@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include "exception.h"
 
-void (*handlers[34])(struct exception_data*);
+void (*handlers[34])(struct interrupt_data*);
 
-void isr_handler(struct exception_data* ex_data) {
+void isr_handler(struct interrupt_data* ex_data) {
     if (handlers[ex_data->int_num]) {
         handlers[ex_data->int_num](ex_data);
         return;
@@ -30,6 +30,6 @@ void init_exceptions() {
     }
 }
 
-void register_exception_handler(void (*handler)(struct exception_data*), uint8_t ex_num) {
-    handlers[ex_num] = handler;
+void register_exception_handler(void (*handler)(struct interrupt_data*), uint8_t int_num) {
+    handlers[int_num] = handler;
 }

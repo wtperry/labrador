@@ -16,7 +16,8 @@
 			"tree.h": "c",
 			"devfs.h": "c",
 			"vfs.h": "c",
-			"string.h": "c"
+			"string.h": "c",
+			"heap.h": "c"
 		}
 	}
 }

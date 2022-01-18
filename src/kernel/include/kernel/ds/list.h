@@ -21,3 +21,5 @@ list_node_t* list_append(list_t* list, void* value);
 list_node_t* list_find(list_t* list, void* value);
 list_node_t* list_at(list_t* list, size_t index);
 void list_remove(list_t* list, list_node_t* node);
+
+void *list_pop_front(list_t* list);

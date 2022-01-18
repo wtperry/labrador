@@ -30,7 +30,7 @@ static int ps2_wait_output(void) {
     return 1;
 }
 
-static void kbd_irq_handler(struct exception_data *r) {
+static void kbd_irq_handler(struct interrupt_data *r) {
 	uint8_t scan_code = inb(PS2_DATA);
 	apic_eoi();
 	printf("%x ", scan_code);
