@@ -2,11 +2,23 @@
 
 #include <stdint.h>
 
+#include <kernel/tasking.h>
+
 #include <kernel/arch/cpu.h>
 #include <kernel/arch/paging.h>
+#include <kernel/arch/time.h>
+#include "idt/idt.h"
+#include "idt/exception.h"
 
-#define APIC_BASE 0x00000000FEE00000
-#define APIC_BASE_VIRT PHYS_TO_VIRT(APIC_BASE)
+#define APIC_TMR_DIV_REG        0x3E0
+#define APIC_TMR_DIV_16         0x3
+#define APIC_TMR_INIT_COUNT_REG 0x380
+#define APIC_TMR_CURR_COUNT_REG 0x390
+#define APIC_TMR_MODE_PERIODIC  (1 << 17)
+#define APIC_LVT_TMR_REG        0x320
+#define APIC_LVT_MASK           (1 << 16)
+
+#define APIC_TMR_INT            33
 
 #define PIC_OCW2_L1             (1 << 0)    // Level 1 interrupt
 #define PIC_OCW2_L2             (1 << 1)    // Level 2 interrupt
@@ -62,10 +74,10 @@ void disable_pic(void) {
 }
 
 // FIXME: read from ACPI tables
-const uint64_t ioapic_base = PHYS_TO_VIRT(0xFEC00000);
-const uint64_t apic_base = PHYS_TO_VIRT(0xFEE00000);
+const uintptr_t ioapic_base = PHYS_TO_VIRT(0xFEC00000);
+const uintptr_t apic_base = PHYS_TO_VIRT(0xFEE00000);
 
-uint32_t ioapic_read(uint32_t offset) {
+uint32_t apic_read(uint32_t offset) {
     return *(uint32_t*)(apic_base + offset);
 }
 
@@ -73,7 +85,7 @@ void apic_write(uint32_t offset, uint32_t value) {
     *(uint32_t*)(apic_base + offset) = value;
 }
 
-uint32_t apic_read(uint32_t index) {
+uint32_t ioapic_read(uint32_t index) {
     *(uint32_t*)ioapic_base = index;
     return *(uint32_t*)(ioapic_base + 0x10);
 }
@@ -111,6 +123,13 @@ void ioapic_set_irq(uint8_t irq, uint64_t apic_id, uint8_t int_num) {
     ioapic_write(low_index, low);
 }
 
+void ioapic_mask_irq(uint8_t irq) {
+    const uint32_t low_index = 0x10 + irq*2;
+    uint32_t low = ioapic_read(low_index);
+    low |= (1 << 16);
+    ioapic_write(low_index, low);
+}
+
 void apic_eoi(void) {
     apic_write(0xB0, 0);
 }
@@ -119,4 +138,29 @@ void apic_init(void) {
     disable_pic();
 
     apic_write(0xF0, 0x1FF);
+}
+
+void apic_timer_isr(struct interrupt_data *r) {
+    update_clock();
+    apic_eoi();
+
+    switch_next();
+}
+
+void apic_timer_init(uint64_t freq) {
+    uint64_t tsc_ticks = tsc_freq / 100; // Time for 10 ms
+
+    uint64_t tsc_end = read_tsc() + tsc_ticks;
+    apic_write(APIC_TMR_DIV_REG, APIC_TMR_DIV_16);
+    apic_write(APIC_TMR_INIT_COUNT_REG, 0xFFFFFFFF);
+
+    while (read_tsc() < tsc_end);
+
+    uint64_t apic_freq = (0xFFFFFFFF - apic_read(APIC_TMR_CURR_COUNT_REG)) * 100;
+
+    printf("APIC Timer Frequency: %lu hz\n", apic_freq);
+
+    register_exception_handler(&apic_timer_isr, APIC_TMR_INT);
+    apic_write(APIC_LVT_TMR_REG, APIC_TMR_MODE_PERIODIC | APIC_TMR_INT);
+    apic_write(APIC_TMR_INIT_COUNT_REG, apic_freq / freq);
 }

@@ -73,29 +73,8 @@ isr_common:
     push %r13
     push %r14
     push %r15
-    mov %ds, %rax
-    push %rax
-    mov %es, %rax
-    push %rax
-    mov %fs, %rax
-    push %rax
-    mov %gs, %rax
-    push %rax
-    mov $0x10, %ax  # load kernel data segment descriptor
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
     mov %rsp, %rdi  # exception data struct
     call isr_handler
-    pop %rax
-    mov %ax, %gs
-    pop %rax
-    mov %ax, %fs
-    pop %rax
-    mov %ax, %es
-    pop %rax
-    mov %ax, %ds
     pop %r15
     pop %r14
     pop %r13

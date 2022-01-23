@@ -23,11 +23,12 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "__seg_gs="
             ],
             "windowsSdkVersion": "10.0.19041.0",
             "compilerPath": "/home/wtperry/opt/cross/bin/x86_64-elf-gcc",
-            "cStandard": "c17",
+            "cStandard": "gnu17",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [

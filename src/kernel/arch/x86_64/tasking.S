@@ -12,11 +12,11 @@ switch_task:
 
 
     # Save current thread stack
-    mov (current_thread), %rcx
+    mov %gs:0x0, %rcx
     mov %rsp, (%rcx)
 
     # Load next thread into current_thread
-    mov %rdi, (current_thread)
+    mov %rdi, %gs:0x0
 
     # Load next thread stack
     mov (%rdi), %rsp
