@@ -1,8 +1,11 @@
 #include <kernel/dev/serial.h>
+#include <kernel/spinlock.h>
 
 #include <stdint.h>
 
 #define PORT 0x3f8          // COM1
+
+spinlock_t serial_lock;
 
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -41,6 +44,8 @@ int init_serial() {
    // If serial is not faulty set it in normal operation mode
    // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
    outb(PORT + 4, 0x0F);
+
+   spin_init(&serial_lock);
    return 0;
 }
 
@@ -55,7 +60,9 @@ void putchar_serial(char a) {
 }
 
 void write_serial(char* str) {
+    spin_acquire(&serial_lock);
     while (*str) {
         putchar_serial(*str++);
     }
+    spin_release(&serial_lock);
 }

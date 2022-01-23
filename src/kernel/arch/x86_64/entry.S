@@ -18,9 +18,9 @@ _start:
     call init_gdt
     call init_idt
 
-    # Call kernel
+    # Call arch setup
     pop %rdi
-    call kernel_main
+    call arch_main
 
     cli
 1:  hlt

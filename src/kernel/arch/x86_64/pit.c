@@ -38,18 +38,27 @@
 uint64_t ticks;
 
 static void pit_isr(struct interrupt_data *r) {
-    printf("Switch!");
+    ticks++;
     apic_eoi();
-    switch_next();
 }
 
-void pit_init(void) {
+uint64_t pit_get_ticks(void) {
+    return ticks;
+}
+
+void pit_init(int freq) {
     ticks = 0;
 
     register_exception_handler(&pit_isr, PIT_INTERRUPT);
     ioapic_set_irq(PIT_IRQ, 0, PIT_INTERRUPT);
 
+    printf("%x\n", PIT_FREQ/freq);
+
     outb(PIT_COMMAND, PIT_COUNTER_0 | PIT_BOTH | PIT_MODE_2);
-    outb(PIT_DATA_0, (PIT_FREQ/100) & 0xFF);
-    outb(PIT_DATA_0, ((PIT_FREQ/100) >> 8) & 0xFF);
+    outb(PIT_DATA_0, (PIT_FREQ/freq) & 0xFF);
+    outb(PIT_DATA_0, ((PIT_FREQ/freq) >> 8) & 0xFF);
+}
+
+void pit_stop(void) {
+    ioapic_mask_irq(PIT_IRQ);
 }

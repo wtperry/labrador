@@ -105,3 +105,33 @@ void *list_pop_front(list_t* list) {
 
     return retval;
 }
+
+list_node_t *list_insert_before(list_t *list, list_node_t *after, void *value) {
+    list_node_t* node = kmalloc(sizeof(list_node_t));
+    node->value = value;
+    node->parent = list;
+    node->next = after;
+
+    if (after) {
+        node->prev = after->prev;
+        after->prev = node;
+    } else {
+        node->prev = NULL;
+    }
+
+    if (node->prev) {
+        node->prev->next = node;
+    }
+
+    if (list->head == after) {
+        list->head = node;
+    }
+
+    if (!list->tail) {
+        list->tail = node;
+    }
+
+    list->length++;
+
+    return node;
+}
