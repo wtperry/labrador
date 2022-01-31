@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef int pid_t;
+
 typedef enum state {
     STATE_READY,
     STATE_RUNNING,
@@ -13,6 +15,8 @@ typedef enum state {
 typedef struct thread {
     void* kernel_stack;
     uint64_t cr3;
+
+    pid_t pid;
     state_t state;
 } thread_t;
 

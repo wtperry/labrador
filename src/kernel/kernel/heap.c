@@ -96,7 +96,7 @@ void* kmalloc(size_t size) {
         if (!block->next) {
             block->next = expand_heap(size);
             block->next->prev = block;
-            dump_heap();
+            //dump_heap();
         }
 
         block = block->next;

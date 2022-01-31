@@ -72,10 +72,8 @@ void generic_early(void) {
 void kernel_main(void) {
 	thread1 = create_task(&task1);
 	thread2 = create_task(&task2);
-	
-	while (1) {
-		sleep(0xFFFFFFFF);
-	}
+
+	sleep(0xFFFFFFFF);
 
 	while (1) {
 		asm("hlt");
