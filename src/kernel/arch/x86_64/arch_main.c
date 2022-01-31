@@ -10,6 +10,7 @@
 #include <kernel/arch/cpu.h>
 #include <kernel/arch/smp.h>
 #include <kernel/arch/time.h>
+#include <kernel/arch/userspace.h>
 
 #include <stdio.h>
 
@@ -26,6 +27,8 @@ void arch_main(boot_info *binfo) {
 	vmm_init(info);
 
     set_gs_base((uint64_t)&processor_local_data[0]);
+
+	syscall_init();
 
     apic_init();
     

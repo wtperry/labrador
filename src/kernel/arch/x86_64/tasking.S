@@ -47,14 +47,20 @@ task_start:
     push %rcx
     push %rax
     pushfq
-    pop %rax
-    mov $(1 << 9), %rcx
-    or %rcx, %rax
-    push %rax
+    orq $(1 << 9), (%rsp)
     mov %cs, %rax
     push %rax
     push $call_task
     iretq
 
+.global user_task_start
+.type user_task_start, @function
+user_task_start:
+    pop %rcx
+    pushfq
+    pop %r11
+    orq $(1 << 9), %r11
+    sysretq
+
 call_task:
-    call %rdi
+    call *%rdi

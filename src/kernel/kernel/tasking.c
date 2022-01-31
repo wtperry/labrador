@@ -20,6 +20,7 @@ spinlock_t scheduler_lock;
 spinlock_t sleep_lock;
 
 extern void task_start(void);
+extern void user_task_start(void);
 
 static void _idle(void) {
     while(1) {
@@ -71,8 +72,6 @@ void switch_next(void) {
     write_serial("Exiting Scheduler!\r\n");
     spin_release(&scheduler_lock);
     switch_task(next_thread);
-
-    __builtin_unreachable();
 }
 
 thread_t *create_task(void (*func)(void)) {
