@@ -1,7 +1,7 @@
 #include "_vsnprintf.h"
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <libk/stdlib.h>
+#include <libk/ctype.h>
+#include <libk/string.h>
 #include <stddef.h>
 #include <stdbool.h>
 

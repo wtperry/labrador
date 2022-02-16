@@ -8,10 +8,10 @@
 #include <kernel/fs/tmpfs.h>
 #include <kernel/fs/tarfs.h>
 #include <kernel/fs/devfs.h>
-#include <stdio.h>
+#include <libk/stdio.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <string.h>
+#include <libk/string.h>
 #include <bootloader/boot_spec.h>
 
 #include <kernel/arch/acpi.h>

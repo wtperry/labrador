@@ -1,6 +1,6 @@
-#include <string.h>
+#include <libk/string.h>
 
-#include <stdlib.h>
+#include <libk/stdlib.h>
 
 char* strdup(const char* src) {
     char* string = malloc(strlen(src) + 1);

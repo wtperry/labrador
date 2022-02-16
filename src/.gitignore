@@ -4,3 +4,4 @@ sysroot
 gdbscript
 *.img
 *.log
+newlib

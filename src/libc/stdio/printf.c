@@ -1,10 +1,10 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
+#include <libk/stdio.h>
+#include <libk/string.h>
+#include <libk/ctype.h>
+#include <libk/stdlib.h>
 #include "_vsnprintf.h"
 
 int _print(const char* in, void* buffer, size_t idx, size_t num, size_t max_len) {

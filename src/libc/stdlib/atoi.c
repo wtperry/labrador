@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <ctype.h>
+#include <libk/stdlib.h>
+#include <libk/ctype.h>
 #include <stddef.h>
 
 // see c std reference
