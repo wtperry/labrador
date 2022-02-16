@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <libk/stdlib.h>
 
 #if defined(__is_libk)
     #include <kernel/heap.h>

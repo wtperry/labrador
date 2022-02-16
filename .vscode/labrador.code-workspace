@@ -17,7 +17,11 @@
 			"devfs.h": "c",
 			"vfs.h": "c",
 			"string.h": "c",
-			"heap.h": "c"
+			"heap.h": "c",
+			"stdlib.h": "c",
+			"stddef.h": "c",
+			"stdio.h": "c",
+			"_vsnprintf.h": "c"
 		}
 	}
 }

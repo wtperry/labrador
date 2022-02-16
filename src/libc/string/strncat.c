@@ -1,4 +1,4 @@
-#include <string.h>
+#include <libk/string.h>
 
 char* strncat(char* dest, const char* src, size_t n) {
     char* ptr = dest + strlen(dest);

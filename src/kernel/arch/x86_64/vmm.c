@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <string.h>
+#include <libk/stdio.h>
+#include <libk/string.h>
 
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
