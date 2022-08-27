@@ -33,7 +33,8 @@
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [
                 "-ffreestanding"
-            ]
+            ],
+            "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],
     "version": 4
