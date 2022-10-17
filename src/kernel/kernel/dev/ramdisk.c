@@ -1,6 +1,6 @@
 #include <kernel/dev/ramdisk.h>
 
-#include <string.h>
+#include <libk/string.h>
 #include <stdint.h>
 #include <stddef.h>
 

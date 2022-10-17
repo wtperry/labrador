@@ -1,7 +1,7 @@
 #include <kernel/arch/pit.h>
 
 #include <stdint.h>
-#include <stdio.h>
+#include <libk/stdio.h>
 
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>

@@ -1,8 +1,8 @@
 #include <kernel/arch/ps2.h>
 
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#include <libk/string.h>
+#include <libk/stdio.h>
 
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>

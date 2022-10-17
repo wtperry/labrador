@@ -1,6 +1,6 @@
 #include <kernel/fs/devfs.h>
 
-#include <string.h>
+#include <libk/string.h>
 
 #include <kernel/heap.h>
 #include <kernel/ds/list.h>

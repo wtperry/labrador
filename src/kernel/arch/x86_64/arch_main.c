@@ -12,7 +12,7 @@
 #include <kernel/arch/time.h>
 #include <kernel/arch/userspace.h>
 
-#include <stdio.h>
+#include <libk/stdio.h>
 
 boot_info *info;
 

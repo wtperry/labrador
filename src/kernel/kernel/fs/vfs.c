@@ -1,7 +1,7 @@
 #include <kernel/fs/vfs.h>
 
-#include <string.h>
-#include <stdio.h>
+#include <libk/string.h>
+#include <libk/stdio.h>
 
 #include <kernel/heap.h>
 #include <kernel/ds/tree.h>

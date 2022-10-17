@@ -1,6 +1,6 @@
 #include <kernel/arch/time.h>
 
-#include <stdio.h>
+#include <libk/stdio.h>
 
 #include <kernel/tasking.h>
 

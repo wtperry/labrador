@@ -1,7 +1,7 @@
 #include "idt.h"
 #include "exception.h"
-#include <stdio.h>
-#include <string.h>
+#include <libk/stdio.h>
+#include <libk/string.h>
 
 #define IDT_FLAGS_64_CALL       0xC
 #define IDT_FLAGS_64_INT        0xE
