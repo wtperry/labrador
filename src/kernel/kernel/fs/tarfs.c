@@ -2,8 +2,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#include <libk/string.h>
+#include <libk/stdio.h>
 #include <stdbool.h>
 
 #include <kernel/heap.h>

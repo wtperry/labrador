@@ -2,6 +2,8 @@
 
 #include <kernel/arch/cpu.h>
 
+#include <libk/stdio.h>
+
 #define EFER_MSR    0xC0000080
 #define STAR_MSR    0xC0000081
 #define LSTAR_MSR   0xC0000082

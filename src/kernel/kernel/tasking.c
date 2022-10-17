@@ -1,6 +1,6 @@
 #include <kernel/tasking.h>
 
-#include <stdio.h>
+#include <libk/stdio.h>
 
 #include <kernel/heap.h>
 #include <kernel/vmm.h>

@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdio.h>
+#include <libk/stdio.h>
 #include "exception.h"
 
 void (*handlers[34])(struct interrupt_data*);

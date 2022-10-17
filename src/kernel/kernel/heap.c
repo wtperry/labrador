@@ -3,8 +3,8 @@
 #include <kernel/arch/paging.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
+#include <libk/stdio.h>
+#include <libk/string.h>
 #include <kernel/dev/serial.h>
 
 #define INIT_HEAP_PAGES 1
