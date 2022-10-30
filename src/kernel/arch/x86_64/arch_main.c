@@ -8,6 +8,7 @@
 
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>
+#include <kernel/arch/pci.h>
 #include <kernel/arch/smp.h>
 #include <kernel/arch/time.h>
 #include <kernel/arch/userspace.h>
@@ -37,6 +38,12 @@ void arch_main(boot_info *binfo) {
     clock_init();
 
     generic_early();
+
+	pci_enumerate(info->rsdp);
+
+	while(1) {
+		asm("hlt");
+	}
 
     apic_timer_init(1000);
 
