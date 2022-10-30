@@ -14,7 +14,6 @@
 #include <libk/string.h>
 #include <bootloader/boot_spec.h>
 
-#include <kernel/arch/acpi.h>
 #include <kernel/arch/apic.h>
 #include <kernel/arch/ps2.h>
 #include <kernel/arch/cpu.h>
