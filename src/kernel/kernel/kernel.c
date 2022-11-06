@@ -62,9 +62,6 @@ void generic_early(void) {
 	vfs_mkdir("/dev");
 	devfs_install();
 
-	init_serial();
-	write_serial("Hello serial!\n\r");
-
 	tasking_init();
 }
 

@@ -26,3 +26,7 @@ int snprintf(char* restrict str, size_t size, const char* restrict format, ...) 
 	va_end(parameters);
 	return written;
 }
+
+int vsnprintf(char* restrict str, size_t size, const char* restrict format, va_list args) {
+	return _vsnprintf(_out_s, str, size, format, args);
+}

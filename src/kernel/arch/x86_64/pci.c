@@ -1,9 +1,9 @@
 #include <kernel/arch/pci.h>
 
-#include <libk/stdio.h>
-
 #include <kernel/arch/acpi.h>
 #include <kernel/arch/acpi_tables.h>
+
+#include <kernel/log.h>
 
 struct pci_hdr_common {
     uint16_t vendor_id;
@@ -28,7 +28,7 @@ void pci_enumerate_function(void* dev_base_addr, int bus, int device, int functi
         return;
     }
 
-    printf("Bus: %u, Device: %u, Function %u, Vendor ID: %lx, Device ID: %lx, Class: %x Sub Class: %x\n", bus, device, function, hdr->vendor_id, hdr->device_id, hdr->class, hdr->subclass);
+    log_printf(LOG_DEBUG, "[PCI] Bus: %u, Dev: %u, Func %u, Vendor ID: %lx, Dev ID: %lx, Class: %x Sub Class: %x", bus, device, function, hdr->vendor_id, hdr->device_id, hdr->class, hdr->subclass);
 }
 
 void pci_enumerate_device(void *bus_base_addr, int bus, int device) {
@@ -64,7 +64,7 @@ void pci_enumerate(void *rsdp_addr) {
     int mcfg_entries = (mcfg->hdr.length - sizeof(mcfg->hdr)) / sizeof(struct mcfg_entry);
 
     for (int i = 0; i < mcfg_entries; i++) {
-        printf("MMIO Addr: %llx, Seg Num: %u, Start: %u, End: %u\n", mcfg->entries[i].base_addr, mcfg->entries[i].segment_group, mcfg->entries[i].start_bus, mcfg->entries[i].end_bus);
+        log_printf(LOG_DEBUG, "[PCI] MMIO Addr: %llx, Seg Num: %u, Start: %u, End: %u", mcfg->entries[i].base_addr, mcfg->entries[i].segment_group, mcfg->entries[i].start_bus, mcfg->entries[i].end_bus);
         int start_bus = mcfg->entries[i].start_bus;
         int end_bus = mcfg->entries[i].end_bus;
 

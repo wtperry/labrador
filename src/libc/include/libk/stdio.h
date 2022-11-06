@@ -32,6 +32,7 @@ int vprintf(const char* restrict format, va_list args);
 int sprintf(char* restrict str, const char* restrict format, ...);
 int snprintf(char* restrict str, size_t size, const char* restrict format, ...);
 int vsprintf(char* restrict str, const char* restrict format, va_list args);
+int vsnprintf(char* restrict str, size_t size, const char* restrict format, va_list args);
 int putchar(int);
 int puts(const char*);
  

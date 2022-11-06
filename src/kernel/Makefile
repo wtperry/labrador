@@ -45,7 +45,8 @@ kernel/fs/tarfs.o \
 kernel/fs/devfs.o \
 kernel/dev/serial.o \
 kernel/tasking.o \
-kernel/spinlock.o
+kernel/spinlock.o \
+kernel/log/log.o
 
 #OBJS=\
 $(ARCHDIR)/crti.o \
