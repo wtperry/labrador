@@ -5,6 +5,8 @@
 #include <kernel/vmm.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/dev/ramdisk.h>
+#include <kernel/log.h>
+#include <kernel/dev/serial.h>
 
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>
@@ -21,6 +23,17 @@ extern void generic_early(void);
 extern void kernel_main(void);
 
 void arch_main(boot_info *binfo) {
+	log_init();
+	init_serial();
+	log_add_output(LOG_DEBUG, write_serial);
+	log_printf(LOG_INFO, "Kernel log initialized!");
+	log_printf(LOG_FATAL, "This is a fatal error");
+	log_printf(LOG_ERROR, "This is an error");
+	log_printf(LOG_WARNING, "This is a warning");
+	log_printf(LOG_INFO, "This is an info message");
+	log_printf(LOG_DEBUG, "This is a debug message");
+	
+
     info = binfo;
     info = vmm_preinit(info);
 	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
