@@ -49,6 +49,7 @@ kernel/spinlock.o \
 kernel/log/log.o \
 kernel/dev/fbvideo.o
 
+
 #OBJS=\
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \

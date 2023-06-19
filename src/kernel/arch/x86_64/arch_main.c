@@ -9,6 +9,7 @@
 #include <kernel/dev/serial.h>
 #include <kernel/dev/fbvideo.h>
 
+
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>
 #include <kernel/arch/pci.h>
@@ -36,11 +37,12 @@ void arch_main(boot_info *binfo) {
 	log_printf(LOG_INFO, "This is an info message");
 	log_printf(LOG_DEBUG, "This is a debug message");
 
-    info = binfo;
-    info = vmm_preinit(info);
+  info = binfo;
+  info = vmm_preinit(info);
 	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
 	pmm_init(&info->mmap, info->num_mmap_entries);
 	vmm_init(info);
+
 
 	boot_parse(info);
 
