@@ -7,6 +7,7 @@
 #include <kernel/dev/ramdisk.h>
 #include <kernel/log.h>
 #include <kernel/dev/serial.h>
+#include <kernel/dev/fbvideo.h>
 
 #include <kernel/arch/apic.h>
 #include <kernel/arch/cpu.h>
@@ -16,6 +17,8 @@
 #include <kernel/arch/userspace.h>
 
 #include <libk/stdio.h>
+
+#include "bootloader.h"
 
 boot_info *info;
 
@@ -32,13 +35,14 @@ void arch_main(boot_info *binfo) {
 	log_printf(LOG_WARNING, "This is a warning");
 	log_printf(LOG_INFO, "This is an info message");
 	log_printf(LOG_DEBUG, "This is a debug message");
-	
 
     info = binfo;
     info = vmm_preinit(info);
 	terminal_initialize(info->fb_ptr, info->fb_width, info->fb_height, info->fb_scanline, info->font);
 	pmm_init(&info->mmap, info->num_mmap_entries);
 	vmm_init(info);
+
+	boot_parse(info);
 
     set_gs_base((uint64_t)&processor_local_data[0]);
 
@@ -72,4 +76,18 @@ void arch_main(boot_info *binfo) {
 	}
 
     kernel_main();
+}
+
+extern void *fb_ptr;
+extern uint16_t fb_height;
+extern uint16_t fb_width;
+extern uint16_t fb_pitch;
+
+int arch_fb_init() {
+	fb_ptr = boot_get_fb_addr();
+	fb_height = boot_get_fb_height();
+	fb_width = boot_get_fb_width();
+	fb_pitch = boot_get_fb_pitch();
+
+	return 0;
 }
