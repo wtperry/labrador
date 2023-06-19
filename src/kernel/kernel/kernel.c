@@ -2,6 +2,7 @@
 #include <kernel/vmm.h>
 #include <kernel/pmm.h>
 #include <kernel/heap.h>
+#include <kernel/dev/fbvideo.h>
 #include <kernel/dev/ramdisk.h>
 #include <kernel/dev/serial.h>
 #include <kernel/fs/vfs.h>
@@ -61,6 +62,8 @@ void generic_early(void) {
 
 	vfs_mkdir("/dev");
 	devfs_install();
+
+	fb_init();
 
 	tasking_init();
 }
