@@ -1,3 +1,5 @@
+#include <kernel/dev/serial.h>
+
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
@@ -94,6 +96,9 @@ void _start(void) {
         uint32_t *fb_ptr = framebuffer->address;
         fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
     }
+
+    serial_init();
+    serial_write("Hello world!\r\n");
 
     // We're done, just hang...
     hcf();

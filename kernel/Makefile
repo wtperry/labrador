@@ -9,7 +9,7 @@ CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -Wpedantic -mno-red-zone -mcmodel
 CPPFLAGS:=-MMD -MP
 LDFLAGS:=-nostdlib -z max-page-size=0x1000
 
-INCLUDE:=../limine
+INCLUDE:=../limine ../include
 
 CPPFLAGS:=$(CPPFLAGS) $(INCLUDE:%=-I%)
 

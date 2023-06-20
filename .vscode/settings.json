@@ -1,7 +1,8 @@
 {
     "C_Cpp.default.compilerPath": "~/opt/cross/bin/x86_64-elf-gcc",
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}/limine"
+        "${workspaceFolder}/limine",
+        "${workspaceFolder}/include"
     ],
     "files.associations": {
         "stddef.h": "c",
