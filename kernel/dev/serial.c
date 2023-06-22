@@ -43,7 +43,7 @@ void serial_putchar(char a) {
    outb(PORT,a);
 }
 
-void serial_write(char* str) {
+void serial_write(const char* str) {
     //spin_acquire(&serial_lock);
     while (*str) {
         serial_putchar(*str++);

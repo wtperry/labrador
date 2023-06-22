@@ -5,8 +5,7 @@
         "${workspaceFolder}/include"
     ],
     "files.associations": {
-        "stddef.h": "c",
-        "stdint.h": "c"
+        "*.h": "c"
     },
     "C_Cpp.default.defines": [
         "__STDC_HOSTED__ 0"

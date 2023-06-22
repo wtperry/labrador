@@ -1,4 +1,5 @@
 #include <kernel/dev/serial.h>
+#include <kernel/log.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -41,7 +42,9 @@ void _start(void) {
     }
 
     serial_init();
-    serial_write("Hello world!\r\n");
+    log_init();
+    log_add_output(LOG_DEBUG, serial_write);
+    log_printf(LOG_INFO, "Kernel log initialized");
 
     // We're done, just hang...
     hcf();

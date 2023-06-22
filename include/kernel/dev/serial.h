@@ -2,4 +2,4 @@
 
 int serial_init(void);
 void serial_putchar(char a);
-void serial_write(char* str);
+void serial_write(const char* str);
