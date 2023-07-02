@@ -57,7 +57,7 @@ struct gdt gdt = {
 
 struct tss_entry tss = {0, {0, 0, 0}, 0, {0, 0, 0, 0, 0, 0, 0}, 0, 0, 0};
 
-extern gdt_load(uint64_t gdt_ptr);
+extern void gdt_load(uint64_t gdt_ptr);
 
 void gdt_init() {
     uint64_t tss_addr = (uint64_t)&tss;

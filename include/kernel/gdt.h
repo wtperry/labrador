@@ -6,4 +6,4 @@
 #define GDT_USER_CODE_DESC      0x18
 #define GDT_USER_DATA_DESC      0x20
 
-void init_gdt();
+void gdt_init();
