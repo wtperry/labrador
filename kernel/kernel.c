@@ -1,5 +1,7 @@
 #include <kernel/dev/serial.h>
 #include <kernel/log.h>
+#include <kernel/idt.h>
+#include <kernel/gdt.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -45,6 +47,11 @@ void _start(void) {
     log_init();
     log_add_output(LOG_DEBUG, serial_write);
     log_printf(LOG_INFO, "Kernel log initialized");
+
+    gdt_init();
+    idt_init();
+
+    int i = 53/0;
 
     // We're done, just hang...
     hcf();

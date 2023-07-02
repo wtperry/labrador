@@ -2,7 +2,7 @@ IMAGE_NAME:=labrador
 
 OVMF:=~/src/edk2/Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd
 QEMU:=qemu-system-x86_64
-QEMUFLAGS:=--bios $(OVMF) -M q35 -net none -cdrom $(IMAGE_NAME).iso -m 4G -boot d
+QEMUFLAGS:=--bios $(OVMF) -M q35 -net none -cdrom $(IMAGE_NAME).iso -m 4G -boot d -no-reboot
 
 MAKEFLAGS += --no-print-directory	
 
@@ -12,6 +12,11 @@ all: $(IMAGE_NAME).iso
 .PHONY: run
 run: $(IMAGE_NAME).iso
 	@$(QEMU) $(QEMUFLAGS)
+
+.PHONY: debug
+debug: $(IMAGE_NAME).iso
+	@$(QEMU) $(QEMUFLAGS) -s -S &
+	@gdb -ex "add-symbol-file build/kernel/kernel.elf" -ex "target remote localhost:1234"
 
 limine:
 	@git clone https://github.com/limine-bootloader/limine.git --branch=v4.x-branch-binary --depth=1
