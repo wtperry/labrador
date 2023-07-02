@@ -2,6 +2,7 @@
 #include <kernel/log.h>
 #include <kernel/idt.h>
 #include <kernel/gdt.h>
+#include <kernel/mem.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -28,6 +29,11 @@ static void hcf(void) {
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
 void _start(void) {
+    serial_init();
+    log_init();
+    log_add_output(LOG_DEBUG, serial_write);
+    log_printf(LOG_INFO, "Kernel log initialized");
+
     // Ensure we got a framebuffer.
     if (framebuffer_request.response == NULL
      || framebuffer_request.response->framebuffer_count < 1) {
@@ -36,6 +42,7 @@ void _start(void) {
 
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    log_printf(LOG_DEBUG, "Framebuffer found at: %.16lx", framebuffer->address);
 
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     for (size_t i = 0; i < 100; i++) {
@@ -43,15 +50,10 @@ void _start(void) {
         fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
     }
 
-    serial_init();
-    log_init();
-    log_add_output(LOG_DEBUG, serial_write);
-    log_printf(LOG_INFO, "Kernel log initialized");
-
     gdt_init();
     idt_init();
 
-    int i = 53/0;
+    mem_init();
 
     // We're done, just hang...
     hcf();

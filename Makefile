@@ -2,7 +2,7 @@ IMAGE_NAME:=labrador
 
 OVMF:=~/src/edk2/Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd
 QEMU:=qemu-system-x86_64
-QEMUFLAGS:=--bios $(OVMF) -M q35 -net none -cdrom $(IMAGE_NAME).iso -m 4G -boot d -no-reboot
+QEMUFLAGS:=--bios $(OVMF) -M q35 -net none -cdrom $(IMAGE_NAME).iso -m 4G -boot d -no-reboot -serial stdio
 
 MAKEFLAGS += --no-print-directory	
 
