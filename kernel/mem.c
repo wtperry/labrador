@@ -2,10 +2,15 @@
 
 #include <kernel/log.h>
 #include <kernel/string.h>
+#include <kernel/heap.h>
 
 #include <stddef.h>
 #include <stdint.h>
 #include <limine.h>
+
+#define KERNEL_REGION_START 0xffffff0000000000
+#define KERNEL_REGION_END 0xffffffff80000000
+#define HEAP_START_PAGES 1
 
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
@@ -67,7 +72,7 @@ static inline void *phys_to_virt(paddr_t phys_addr) {
     return (void *)(phys_addr + virt_offset);
 }
 
-void mem_init() {
+static void pmm_init() {
     if (hhdm_request.response == NULL) {
         log_printf(LOG_FATAL, "Bootloader memory map not found!");
 
@@ -115,6 +120,25 @@ void mem_init() {
     log_printf(LOG_INFO, "Total Memory: %uMB", (free_memory + reserved_memory + reserved_memory)/1024/1024);
 }
 
+void vmm_init() {
+    //TODO: Get current page directory and store in CPU data structure
+
+    //Kickstart the heap with the first part of the kernel object region.
+    //We have to do this first, as the virtual allocator will require heap
+    //objects to track virtual memory regions
+
+    //TODO: Map pages into heap area
+
+    heap_init(KERNEL_REGION_START, HEAP_START_PAGES);
+
+    //TODO: Setup free list to use for kernel regions
+}
+
+void mem_init() {
+    pmm_init();
+    vmm_init();
+}
+
 void mem_free_phys_page(paddr_t page_addr) {
     free_memory += PAGE_SIZE;
     used_memory -= PAGE_SIZE;
@@ -139,4 +163,34 @@ paddr_t mem_get_phys_page() {
     memset(phys_to_virt(page), 0, PAGE_SIZE);
 
     return page;
+}
+
+void mem_map_page(union paging_entry_t *page_table_entry, paddr_t phys_addr, uint64_t flags) {
+    page_table_entry->raw = 0;
+    page_table_entry->bits.base = phys_addr >> 12;
+    page_table_entry->bits.present = 1;
+
+    if (!(flags & MEM_FLAGS_EXECUTABLE)) {
+        page_table_entry->bits.no_execute = 1;
+    }
+
+    if (flags & MEM_FLAGS_USER) {
+        page_table_entry->bits.user = 1;
+    }
+
+    if (flags & MEM_FLAGS_WRITEABLE) {
+        page_table_entry->bits.writeable = 1;
+    }
+}
+
+void mem_unmap_page(union paging_entry_t *page_table_entry) {
+    page_table_entry->raw = 0;
+}
+
+void *mem_alloc_kernel_region(size_t num_pages, uint64_t flags) {
+
+}
+
+void *mem_free_kernel_region(void *virt_addr, size_t num_pages) {
+
 }
