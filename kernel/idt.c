@@ -66,6 +66,7 @@ void default_int_handler(struct interrupt_data* ex_data) {
     log_printf(LOG_FATAL, "rsi=%.16lx rdi=%.16lx rbp=%.16lx rsp=%.16lx", ex_data->rsi, ex_data->rdi, ex_data->rbp, ex_data->user_rsp);
     log_printf(LOG_FATAL, "r8 =%.16lx r9 =%.16lx r10=%.16lx r11=%.16lx", ex_data->r8, ex_data->r9, ex_data->r10, ex_data->r11);
     log_printf(LOG_FATAL, "r12=%.16lx r13=%.16lx r14=%.16lx r15=%.16lx", ex_data->r12, ex_data->r13, ex_data->r14, ex_data->r15);
+    log_printf(LOG_FATAL, "rip=%.16lx", ex_data->rip);
     //log_printf(LOG_FATAL, "cs=%.4x ds=%.4x es=%.4x fs=%.4x gs=%.4x ss=%.4x\n", ex_data->cs, ex_data->ds, ex_data->es, ex_data->fs, ex_data->gs, ex_data->ss);
     log_printf(LOG_FATAL, "Halting kernel...");
     

@@ -3,6 +3,7 @@
 #include <kernel/idt.h>
 #include <kernel/gdt.h>
 #include <kernel/mem.h>
+#include <kernel/smp.h>
 
 #include <stdint.h>
 #include <stddef.h>

@@ -9,7 +9,7 @@
 #define LOG_INFO 3
 #define LOG_DEBUG 4
 
-typedef size_t (*console_write_t)(const char *string);
+typedef void (*console_write_t)(const char *string);
 
 void log_init(void);
 

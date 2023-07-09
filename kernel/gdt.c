@@ -1,4 +1,5 @@
 #include <kernel/gdt.h>
+#include <kernel/smp.h>
 
 #include <stdint.h>
 
@@ -30,9 +31,9 @@ struct gdt {
     uint64_t entries[5];
     struct gdt_entry tss_low;
     struct gdt_entry_high tss_high;
-}; __attribute__((packed));
+} __attribute__((packed));
 
-typedef struct tss_entry {
+struct tss_entry {
 	uint32_t reserved_0;
 	uint64_t rsp[3];
 	uint64_t reserved_1;
@@ -71,4 +72,8 @@ void gdt_init() {
     gdt_ptr.base = (uint64_t)&gdt;
 
     gdt_load((uint64_t)&gdt_ptr);
+
+    // Set up gs segment so this_core points to bootstrap processor struct
+    // on this core. Prerequisite for memory manager
+    set_gs_base((uintptr_t)&processor_local_data[0]);
 }

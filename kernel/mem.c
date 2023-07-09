@@ -3,13 +3,14 @@
 #include <kernel/log.h>
 #include <kernel/string.h>
 #include <kernel/heap.h>
+#include <kernel/smp.h>
 
 #include <stddef.h>
 #include <stdint.h>
 #include <limine.h>
 
-#define KERNEL_REGION_START 0xffffff0000000000
-#define KERNEL_REGION_END 0xffffffff80000000
+#define KERNEL_REGION_START ((void *)0xffffff0000000000)
+#define KERNEL_REGION_END ((void *)0xffffffff80000000)
 #define HEAP_START_PAGES 1
 
 static volatile struct limine_hhdm_request hhdm_request = {
@@ -68,6 +69,13 @@ static void log_memmap_entries(struct limine_memmap_entry **memmap_entries, size
     }
 }
 
+static inline union paging_entry_t *get_current_pml4() {
+    uintptr_t PML4T;
+    asm("movq %%cr3, %0" : "=r" (PML4T));
+    PML4T = PML4T & 0xFFFFFFFFFFFFF000;
+    return (union paging_entry_t *)PML4T;
+}
+
 static inline void *phys_to_virt(paddr_t phys_addr) {
     return (void *)(phys_addr + virt_offset);
 }
@@ -121,7 +129,7 @@ static void pmm_init() {
 }
 
 void vmm_init() {
-    //TODO: Get current page directory and store in CPU data structure
+    this_core->current_pml4 = get_current_pml4();
 
     //Kickstart the heap with the first part of the kernel object region.
     //We have to do this first, as the virtual allocator will require heap

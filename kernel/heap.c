@@ -2,6 +2,7 @@
 
 #include <kernel/log.h>
 #include <kernel/mem.h>
+#include <kernel/string.h>
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -20,7 +21,7 @@ struct mem_header* next_free = 0;
 
 struct mem_header* expand_heap(size_t min_size) {
     size_t num_pages = (min_size + 4095) / 4096;
-    struct mem_header* new_block = (struct mem_header*) vmm_alloc_region(num_pages);
+    struct mem_header* new_block = (struct mem_header*) mem_alloc_kernel_region(num_pages, MEM_FLAGS_WRITEABLE);
     new_block->used = false;
     new_block->next = NULL;
     new_block->prev = NULL;
