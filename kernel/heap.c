@@ -35,6 +35,8 @@ void heap_init(void *heap_start, size_t num_pages) {
     next_free->prev = NULL;
     next_free->used = false;
     next_free->size = num_pages * PAGE_SIZE - sizeof(struct mem_header);
+
+    log_printf(LOG_INFO, "Kernel heap initialized at %.16lx with size %ld", heap_start, num_pages * PAGE_SIZE);
 }
 
 void* kmalloc(size_t size) {

@@ -13,6 +13,11 @@
 #define KERNEL_REGION_END ((void *)0xffffffff80000000)
 #define HEAP_START_PAGES 1
 
+#define PML4T_INDEX(vaddr)  ((vaddr >> 39) & 0x1ff)
+#define PDPT_INDEX(vaddr)   ((vaddr >> 30) & 0x1ff)
+#define PDT_INDEX(vaddr)    ((vaddr >> 21) & 0x1ff)
+#define PT_INDEX(vaddr)     ((vaddr >> 12) & 0x1ff)
+
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
     .revision = 0
@@ -128,14 +133,56 @@ static void pmm_init() {
     log_printf(LOG_INFO, "Total Memory: %uMB", (free_memory + reserved_memory + reserved_memory)/1024/1024);
 }
 
-void vmm_init() {
-    this_core->current_pml4 = get_current_pml4();
+/// @brief Returns pointer to page table in virutal memory given an upper table entry
+/// @param table_entry Entry in upper level page table
+/// @return Pointer to page table in virtual memory
+inline static union paging_entry_t *get_subtable_ptr(union paging_entry_t *table_entry) {
+    return (union paging_entry_t *)phys_to_virt(table_entry->bits.base << 12);
+}
+
+/// @brief Returns page table entry corresponding to vaddr.
+///        Allocates new entires in upper level tables as required.
+/// @param pml4t PML4 table
+/// @param vaddr Virtual address
+/// @param flags Flags to assign to upper level table entries
+/// @return Page table entry coresponding to given virtual address
+static union paging_entry_t *get_pte(union paging_entry_t *pml4t, uintptr_t vaddr, uint64_t flags) {
+    union paging_entry_t *pml4e = pml4t + PML4T_INDEX(vaddr);
+
+    if (!pml4e->bits.present) {
+        mem_map_page(pml4e, mem_get_phys_page(), flags);
+    }
+
+    union paging_entry_t *pdpe = get_subtable_ptr(pml4e) + PDPT_INDEX(vaddr);
+
+    if (!pdpe->bits.present) {
+        mem_map_page(pdpe, mem_get_phys_page(), flags);
+    }
+
+    union paging_entry_t *pdte = get_subtable_ptr(pdpe) + PDT_INDEX(vaddr);
+
+    if (!pdte->bits.present) {
+        mem_map_page(pdte, mem_get_phys_page(), flags);
+    }
+
+    union paging_entry_t *pte = get_subtable_ptr(pdte) + PT_INDEX(vaddr);
+
+    return pte;
+}
+
+static void vmm_init() {
+    union paging_entry_t *pml4t = get_current_pml4();
+    this_core->current_pml4 = pml4t;
 
     //Kickstart the heap with the first part of the kernel object region.
     //We have to do this first, as the virtual allocator will require heap
     //objects to track virtual memory regions
 
-    //TODO: Map pages into heap area
+    for (size_t i = 0; i < HEAP_START_PAGES; i++) {
+        uintptr_t vaddr = (uintptr_t)KERNEL_REGION_START + i * PAGE_SIZE;
+        union paging_entry_t *pte = get_pte(pml4t, vaddr, MEM_FLAGS_WRITEABLE);
+        mem_map_page(pte, mem_get_phys_page(), MEM_FLAGS_WRITEABLE);
+    }
 
     heap_init(KERNEL_REGION_START, HEAP_START_PAGES);
 
