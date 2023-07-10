@@ -4,19 +4,20 @@
 #include <kernel/string.h>
 #include <kernel/heap.h>
 #include <kernel/smp.h>
+#include <kernel/ds/list.h>
 
 #include <stddef.h>
 #include <stdint.h>
 #include <limine.h>
 
-#define KERNEL_REGION_START ((void *)0xffffff0000000000)
+#define KERNEL_REGION_START ((void *)0xffffff8000000000)
 #define KERNEL_REGION_END ((void *)0xffffffff80000000)
 #define HEAP_START_PAGES 1
 
-#define PML4T_INDEX(vaddr)  ((vaddr >> 39) & 0x1ff)
-#define PDPT_INDEX(vaddr)   ((vaddr >> 30) & 0x1ff)
-#define PDT_INDEX(vaddr)    ((vaddr >> 21) & 0x1ff)
-#define PT_INDEX(vaddr)     ((vaddr >> 12) & 0x1ff)
+#define PML4T_INDEX(vaddr)  (((uintptr_t)vaddr >> 39) & 0x1ff)
+#define PDPT_INDEX(vaddr)   (((uintptr_t)vaddr >> 30) & 0x1ff)
+#define PDT_INDEX(vaddr)    (((uintptr_t)vaddr >> 21) & 0x1ff)
+#define PT_INDEX(vaddr)     (((uintptr_t)vaddr >> 12) & 0x1ff)
 
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
@@ -35,6 +36,13 @@ size_t reserved_memory = 0;
 paddr_t next_free_page = 0;
 
 uintptr_t virt_offset = 0;  //offset for the higher half direct memory map provided by limine
+
+list_t *kernel_vmem_free_list;
+
+typedef struct {
+    uintptr_t start;
+    size_t num_pages;
+} free_list_entry_t;
 
 typedef struct {
     paddr_t next;
@@ -186,7 +194,15 @@ static void vmm_init() {
 
     heap_init(KERNEL_REGION_START, HEAP_START_PAGES);
 
-    //TODO: Setup free list to use for kernel regions
+    kernel_vmem_free_list = list_create();
+    free_list_entry_t *first_free = kmalloc(sizeof(*first_free));
+    first_free->start = (uintptr_t)KERNEL_REGION_START + HEAP_START_PAGES * PAGE_SIZE;
+    first_free->num_pages = ((uintptr_t)KERNEL_REGION_END - (uintptr_t)KERNEL_REGION_START) / PAGE_SIZE - HEAP_START_PAGES;
+    list_append(kernel_vmem_free_list, first_free);
+
+    log_printf(LOG_DEBUG, "Heap starts at pml4 index %d, pdp index %d, pdt index %d, and pt index %d", PML4T_INDEX(KERNEL_REGION_START),
+        PDPT_INDEX(KERNEL_REGION_START), PDT_INDEX(KERNEL_REGION_START), PT_INDEX(KERNEL_REGION_START));
+    log_printf(LOG_DEBUG, "Added entry to free list starting at %.16lx with %ld pages", first_free->start, first_free->num_pages);
 }
 
 void mem_init() {
@@ -243,9 +259,44 @@ void mem_unmap_page(union paging_entry_t *page_table_entry) {
 }
 
 void *mem_alloc_kernel_region(size_t num_pages, uint64_t flags) {
+    list_node_t *node = kernel_vmem_free_list->head;
 
+    uintptr_t region_start = 0;
+
+    while (node) {
+        free_list_entry_t *free_list_entry = node->value;
+        if (free_list_entry->num_pages > num_pages) {
+            //replace free list entry with a new smaller one
+            free_list_entry->num_pages -= num_pages;
+            region_start = free_list_entry->start;
+            free_list_entry->start += num_pages * PAGE_SIZE;
+            break;
+        } else if (free_list_entry->num_pages == num_pages) {
+            //we've found what we need
+            region_start = free_list_entry->start;
+            list_remove(kernel_vmem_free_list, node);
+            break;
+        }
+
+        node = node->next;
+    }
+
+    if (!region_start) {
+        //nothing available!
+        return NULL;
+    }
+
+    for (size_t i = 0; i < num_pages; i++) {
+        uintptr_t vaddr = region_start + i * PAGE_SIZE;
+        union paging_entry_t *pte = get_pte(this_core->current_pml4, vaddr, flags);
+        mem_map_page(pte, mem_get_phys_page(), flags);
+    }
+
+    return (void *)region_start;
 }
 
-void *mem_free_kernel_region(void *virt_addr, size_t num_pages) {
-
+void mem_free_kernel_region(void *virt_addr, size_t num_pages) {
+    (void)virt_addr;
+    (void)num_pages;
+    return;
 }

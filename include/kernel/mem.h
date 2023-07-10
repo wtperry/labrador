@@ -39,4 +39,4 @@ paddr_t mem_get_phys_page();
 void mem_map_page(union paging_entry_t *page_table_entry, paddr_t phys_addr, uint64_t flags);
 void mem_unmap_page(union paging_entry_t *page_table_entry);
 void *mem_alloc_kernel_region(size_t num_pages, uint64_t flags);
-void *mem_free_kernel_region(void *virt_addr, size_t num_pages);
+void mem_free_kernel_region(void *virt_addr, size_t num_pages);
