@@ -82,6 +82,14 @@ static void log_memmap_entries(struct limine_memmap_entry **memmap_entries, size
     }
 }
 
+void dump_kernel_free_list() {
+    log_printf(LOG_DEBUG, "Kernel address space freelist");
+    for (list_node_t *node = kernel_vmem_free_list->head; node; node = node->next) {
+        free_list_entry_t *entry = (free_list_entry_t *)node->value;
+        log_printf(LOG_DEBUG, "Addr: %.16lx    Pages: %d", entry->start, entry->num_pages);
+    }
+}
+
 static inline union paging_entry_t *get_current_pml4() {
     uintptr_t PML4T;
     asm("movq %%cr3, %0" : "=r" (PML4T));
@@ -295,8 +303,43 @@ void *mem_alloc_kernel_region(size_t num_pages, uint64_t flags) {
     return (void *)region_start;
 }
 
-void mem_free_kernel_region(void *virt_addr, size_t num_pages) {
-    (void)virt_addr;
-    (void)num_pages;
-    return;
+void mem_free_kernel_region(void *vaddr, size_t num_pages) {
+    //Loop through free list to find where to insert
+    list_node_t *node = kernel_vmem_free_list->head;
+
+    while (node) {
+        free_list_entry_t *free_list_entry = node->value;
+        if (free_list_entry->start > (uintptr_t)vaddr) {
+            //we need to insert before this node
+            break;
+        }
+
+        node = node->next;
+    }
+
+    free_list_entry_t *new_entry = kmalloc(sizeof(*new_entry));
+    new_entry->start = (uintptr_t)vaddr;
+    new_entry->num_pages = num_pages;
+    list_node_t *new_node = list_insert_before(kernel_vmem_free_list, node, new_entry);
+
+    //check next and previous to see if we can combine
+    list_node_t *prev_node = new_node->prev;
+    if (prev_node) {
+        free_list_entry_t *prev_entry = (free_list_entry_t *)prev_node->value;
+        if ((prev_entry->start + prev_entry->num_pages * PAGE_SIZE) == (uintptr_t)vaddr) {
+            prev_entry->num_pages += num_pages;
+            list_remove(kernel_vmem_free_list, new_node);
+            new_node = prev_node;
+            new_entry = prev_entry;
+        }
+    }
+
+    list_node_t *next_node = new_node->next;
+    if (next_node) {
+        free_list_entry_t *next_entry = (free_list_entry_t *)next_node->value;
+        if (((uintptr_t)vaddr + num_pages * PAGE_SIZE) == next_entry->start) {
+            new_entry->num_pages += next_entry->num_pages;
+            list_remove(kernel_vmem_free_list, next_node);
+        }
+    }
 }
