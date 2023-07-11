@@ -116,7 +116,8 @@ list_node_t *list_insert_before(list_t *list, list_node_t *after, void *value) {
         node->prev = after->prev;
         after->prev = node;
     } else {
-        node->prev = NULL;
+        node->prev = list->tail;
+        list->tail = node;
     }
 
     if (node->prev) {
@@ -125,10 +126,6 @@ list_node_t *list_insert_before(list_t *list, list_node_t *after, void *value) {
 
     if (list->head == after) {
         list->head = node;
-    }
-
-    if (!list->tail) {
-        list->tail = node;
     }
 
     list->length++;
